@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "semiotic-mender-461407-n2",
+  "private_key_id": "9d029397fc74d7af924fde98d0779033fc77f02c",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC8yAXiyveTxK3z\nR/1xz5GBD71RW9bW2/+8DwZOuR6iWj9uzlVybQvj1g79mmXD/90FXVy8liWtU1rf\nckNm29eWufnFEEUagn/XRurnkO7/K1x5irSNqNwsCLT+VE119jSW8yVVSKBKWKWG\nncYqlUPMImOuzeO9ySCqd844XHkyop8dOOa4XyvPAca6rp1qdFBXRoyeb1gnD9mF\nUAuRCsjKYLK8UODHk4XAi5bHqJe5ViEFVHSh07rAvKbO4jHND+X/+VlpzE7CFPiK\nBT3fx3w55DdXCMBb8ORs/DRXqHuQsVqVqrVpoZzypz/rK3SflF7wPAgRqDi9cA1x\nZ3e1cE/fAgMBAAECggEAOMSffH0TaQSmWHeH/77u3tQYVoxa9P5wDyGngGnLi/++\nfngemsuu3SMEG//fZUqeMJxMJEu0ZcQgmfvWx+oJEQK42KkVVqzye46QWfUr4WCt\nLMFonQavurAdmTNJndTdKJ1SVyyBQwoYMHxmWGzNV+fpeOnh97KxF4HyaeFo8rAP\nDxMgEuvgkRmxUEbOTE7te0sn1a9vIFmySCOi+tlAFMDdYgQo9qk+mSfrohjzlCDj\nPo9LPygI7kwtptGkK/4+98IzjBPTDECCPRSTnHRuBf/PaXG9wzmplJzWSETSAJUo\nlJUSmfYHwih5vMBhHiknc64OgkzWHf8RbvXzU3bMYQKBgQDhL/79jrdusc7FdgLo\n59XKMuJkIYHTdRlitDzlV7idIRPErFdzAj9ELKoFwBfv3qLlv1rgvsMfVSJysO/w\nc1oS8s5p0y8/9IGA0EYTYqUKNdEGCbJOFt8DjEUsfoMaNmJe/pPK5nuEbdbYdJeU\nDN56a+X8Sg2u5YfIe9seFDWdYQKBgQDWnMU4SmJVW12r8agecShjrUchYMgSGAin\npe39bC4kzXV09wHNFKMBKWHuAvcrmP2iH0b7IciH9P72BLdJkkNgcNgYRpwiR8+e\nLmYuoC5U3F+OKgW+Ue/4eh1cTsTZJcm3amiTPsSSFu3GnksBUf9WJiBN1EBc88MM\nKP105Zm1PwKBgQCJL+pSor2RjHWByrFfHs4aDwHpKpijMHW0skVfGx/3ag1XBf+I\nq1fLusIiGrL6iVIIUZmVzeGllwITiUPD4yJ+5LlnsybX+adjyH7IlJIjNEIRQZsF\nA939lVkXEEPiljs70DBNrjiVpyz6VZ16rpRjVJSaLKtFX8RnGT2Wh41aQQKBgGSW\nlAV/L7msGipmGJM0HGcjpywozX1VkHDrX7GhC7uqJPxObaSuoHwB5mmFME5Z5b8g\nA8ffHLtEhF/Q9Atip3vDSDWQmsuidthADRqbbzvNEmhyn8CFbQE8UxiZvr+8a2Ax\nWpRxHfcPEiE+vg7/XLsHIar46bXndqrzZ2Br4PBHAoGBAKamEYZQ2yGK+hsPo/Qv\nv9gLkHHf1p/Uuwrmj8LMGUiMaScEKJb6ZHZDEw/6zhwjtppN4g5Im1OEFO4miV/q\ny3Jt+xqH5Z9Yh+hP8x/gHWSIihjUEw2GBrEjhzhJ9gIt1Z8tMT7Ij+2QQv39jtH8\nu69UU/SJ0DhbAcj2Si0KQhFF\n-----END PRIVATE KEY-----\n",
+  "client_email": "pitch-practice-backend@semiotic-mender-461407-n2.iam.gserviceaccount.com",
+  "client_id": "107891401445367596388",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/pitch-practice-backend%40semiotic-mender-461407-n2.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

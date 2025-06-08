@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Pitch Practice - Virtual Boardroom</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-analytics.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --mdc-theme-primary: #1a73e8; /* Google Blue */
+            --mdc-theme-secondary: #34a853; /* Google Green */
+            --mdc-theme-error: #ea4335; /* Google Red */
+            --mdc-theme-surface: #ffffff;
+            --mdc-theme-on-surface: #202124;
+            --mdc-theme-background: #f8f9fa; /* Light grey background */
+            --mdc-elevation-dp2: 0 2px 4px rgba(0,0,0,0.08), 0 4px 5px rgba(0,0,0,0.05);
+            --mdc-elevation-dp4: 0 4px 8px rgba(0,0,0,0.1), 0 8px 10px rgba(0,0,0,0.06);
+            --mdc-elevation-dp8: 0 8px 16px rgba(0,0,0,0.12), 0 16px 20px rgba(0,0,0,0.08);
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--mdc-theme-background);
+            color: var(--mdc-theme-on-surface);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            background-color: var(--mdc-theme-surface);
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: var(--mdc-elevation-dp4);
+            width: 100%;
+            max-width: 960px; /* Slightly wider for a more spacious feel */
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap; /* Allow wrapping on small screens */
+            text-align: center;
+        }
+
+        .header img {
+            height: 100px; /* Increased logo size */
+            margin-right: 15px;
+            margin-bottom: 10px; /* Space below logo on wrap */
+        }
+
+        .header h1 {
+            color: var(--mdc-theme-on-surface);
+            text-align: center;
+            margin: 0;
+            font-weight: 500;
+            font-size: 2.2rem;
+            flex-grow: 1; /* Allow h1 to take available space */
+        }
+
+        h2 {
+            color: var(--mdc-theme-on-surface);
+            font-weight: 500;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.6rem;
+        }
+
+        h3 {
+            color: #5f6368; /* Google grey */
+            font-weight: 500;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .intro-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 20px;
+        }
+        .intro-section h2 {
+            font-size: 1.8rem;
+            color: var(--mdc-theme-on-surface);
+            margin-bottom: 15px;
+            font-weight: 400;
+        }
+        .intro-section p {
+            font-size: 1.1rem;
+            color: #5f6368;
+            max-width: 700px;
+            margin: 0 auto 25px auto;
+            line-height: 1.7;
+        }
+        .features-list {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+        .features-list li {
+            background-color: var(--mdc-theme-background);
+            padding: 12px 20px;
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+            font-weight: 400;
+            font-size: 0.95rem;
+            color: #5f6368;
+            display: flex;
+            align-items: center;
+        }
+        .features-list li::before {
+            content: 'check'; /* Material icon name */
+            font-family: 'Material Icons';
+            margin-right: 8px;
+            color: var(--mdc-theme-secondary);
+            font-size: 1.2em;
+        }
+
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        /* Material-like input styles */
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        textarea,
+        select {
+            padding: 12px;
+            border-radius: 4px;
+            border: 1px solid #dadce0;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            color: var(--mdc-theme-on-surface);
+            background-color: var(--mdc-theme-surface);
+            outline: none;
+            width: 100%; /* Default to full width for better mobile fit */
+        }
+        input[type="text"]:focus,
+        input[type="email"]:focus,
+        input[type="password"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--mdc-theme-primary);
+            box-shadow: 0 0 0 1px var(--mdc-theme-primary);
+        }
+        input[type="text"][readonly] {
+            background-color: #f0f0f0;
+            cursor: default;
+        }
+        .user-ident input { flex-grow: 1; min-width: 150px; }
+        .controls-connection { display: flex; align-items: center; gap: 10px; display: none; }
+        .controls-connection input[type="text"] { min-width: 250px; }
+
+        /* Material-like button styles */
+        .btn {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.20); /* Material elevation 2 */
+            letter-spacing: 0.02857em; /* Material button text spacing */
+            text-transform: uppercase;
+        }
+        .btn:hover {
+            box-shadow: 0 4px 4px 0 rgba(0,0,0,0.14), 0 5px 2px -3px rgba(0,0,0,0.12), 0 2px 8px 0 rgba(0,0,0,0.20); /* Material elevation 4 */
+        }
+        .btn:active {
+            box-shadow: 0 2px 2px 0 rgba(0,0,0,0.14), 0 3px 1px -2px rgba(0,0,0,0.12), 0 1px 5px 0 rgba(0,0,0,0.20); /* Back to elevation 2 */
+        }
+        .btn:disabled {
+            background-color: #e0e0e0 !important;
+            color: #a0a0a0 !important;
+            cursor: not-allowed;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+
+        .connect-btn { background-color: var(--mdc-theme-primary); color: white; }
+        .connect-btn:hover { background-color: #1565c0; } /* Darker blue */
+        .action-btn { background-color: var(--mdc-theme-secondary); color: white; min-width: 180px; text-align: center;}
+        .action-btn:hover { background-color: #2e7d32; } /* Darker green */
+        .action-btn.ready { background-color: #f9ab00; /* Google yellow */ color: #333; }
+        .action-btn.ready:hover { background-color: #f7b733; }
+        .stop-btn { background-color: var(--mdc-theme-error); color: white; display: none; }
+        .stop-btn:hover { background-color: #c52c2c; }
+
+        .google-btn {
+            background-color: var(--mdc-theme-surface);
+            color: #5f6368;
+            border: 1px solid #dadce0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            box-shadow: none; /* Flat button */
+        }
+        .google-btn:hover {
+            background-color: #f0f0f0;
+            box-shadow: var(--mdc-elevation-dp2); /* Subtle elevation on hover */
+        }
+        .google-btn img {
+            margin-right: 10px;
+            height: 20px;
+        }
+
+        #status {
+            margin-bottom: 20px;
+            padding: 14px 20px;
+            background-color: #e8f0fe; /* Light blue */
+            border-left: 4px solid var(--mdc-theme-primary);
+            border-radius: 4px;
+            text-align: center;
+            font-weight: 500;
+            color: var(--mdc-theme-primary);
+            box-shadow: var(--mdc-elevation-dp2);
+        }
+        #status.error {
+            background-color: #fce8e6; /* Light red */
+            border-left-color: var(--mdc-theme-error);
+            color: var(--mdc-theme-error);
+        }
+
+        #timer {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--mdc-theme-error);
+            text-align: center;
+            margin-bottom: 20px;
+            display: none;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .boardroom-container { display: flex; flex-direction: column; gap: 20px; }
+        .investor-panel {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background-color: #e8f0fe; /* Light blue */
+            border-radius: 8px;
+            margin-bottom: 20px;
+            min-height:180px; /* Increased height */
+            align-items: center;
+            box-shadow: var(--mdc-elevation-dp2);
+            flex-wrap: wrap; /* Allow investors to wrap */
+            gap: 20px; /* Space between investors when wrapped */
+        }
+        .investor { text-align: center; position: relative; width: 160px; } /* Increased width */
+        .investor img.avatar {
+            width: 120px; /* Larger avatars */
+            height: 120px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            object-fit: cover;
+            margin-bottom: 10px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .investor.speaking img.avatar {
+            border-color: var(--mdc-theme-secondary);
+            box-shadow: 0 0 20px rgba(52, 168, 83, 0.6); /* Green glow */
+        }
+        .investor-name-title { font-weight: 500; color: #3c4043; font-size: 1.1rem;}
+
+        .speech-bubble {
+            position: absolute;
+            top: -80px; /* Adjusted position for larger avatars */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--mdc-theme-surface);
+            color: var(--mdc-theme-on-surface);
+            padding: 12px 18px;
+            border-radius: 18px; /* More rounded */
+            max-width: 280px; /* Slightly wider */
+            min-width: 180px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            box-shadow: var(--mdc-elevation-dp4); /* More pronounced shadow for bubbles */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease, top 0.3s ease;
+            z-index: 10;
+            border: 1px solid #dadce0;
+        }
+        .speech-bubble.visible { opacity: 1; visibility: visible; top: -100px; } /* Adjusted visible position */
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid var(--mdc-theme-surface);
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.05));
+        }
+
+        .main-interaction-area { display: flex; gap: 20px; flex-wrap: wrap;}
+        .user-speech-area {
+            flex: 3;
+            min-width: 300px; /* Ensure it doesn't get too small */
+            padding: 20px;
+            background-color: #e8f0fe; /* Light blue */
+            border-radius: 8px;
+            min-height: 120px;
+            border: 1px solid #c5dff2;
+            box-shadow: var(--mdc-elevation-dp2);
+            flex-grow: 1; /* Allow to grow to fill space */
+        }
+        .user-speech-area h3 { margin-top: 0; font-size: 1.2rem; color: #202124; }
+        #user-transcription { font-style: italic; color: #1a73e8; min-height: 25px; font-size: 1.05rem; }
+
+        .full-log-area {
+            flex: 2;
+            min-width: 250px; /* Ensure it doesn't get too small */
+            background-color: #f1f3f4; /* Slightly darker background for log */
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dadce0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05); /* Subtle inset shadow */
+            flex-grow: 1; /* Allow to grow to fill space */
+        }
+        .full-log-area h3 { margin-top: 0; font-size: 1.2rem; color: #202124; }
+        #transcription { font-size: 0.9rem; line-height: 1.7; }
+        .transcription-entry { margin-bottom: 12px; padding: 10px; border-radius: 6px; background-color: var(--mdc-theme-surface); box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .transcription-entry .investor-name-log { font-weight: bold; }
+
+        .investor-alex-chen { color: #34a853; } /* Google green */
+        .investor-maria-santos { color: #4285f4; } /* Google blue */
+        .investor-ben-carter { color: #ea4335; } /* Google red */
+
+        .user-text-log { color: #202124; background-color: #e6f4ea; /* Light green */ }
+
+        .controls-stream {
+            display: flex; /* Added display flex */
+            flex-direction: row; /* Default to row for desktop */
+            justify-content: center; /* Center buttons horizontally */
+            align-items: center; /* Center vertically */
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            transition: margin-bottom 0.4s ease-in-out;
+            /* Removed inline style margin-top: 20px */
+        }
+        .container.speech-active .controls-stream {
+            margin-bottom: 100px; /* More space for speech bubble below */
+        }
+
+        #reportArea, #historyArea {
+            display: none;
+            padding: 25px;
+            background-color: var(--mdc-theme-surface);
+            border-radius: 8px;
+            margin-top:20px;
+            box-shadow: var(--mdc-elevation-dp4);
+        }
+        .report-section { margin-bottom: 30px; padding-bottom: 25px; }
+        .report-section:not(:last-child) { border-bottom: 1px solid #e0e0e0; }
+        .report-section h2 {
+            font-size: 1.6rem;
+            color: var(--mdc-theme-on-surface);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--mdc-theme-primary);
+            padding-bottom: 10px;
+            font-weight: 500;
+        }
+        .report-section h3 { font-size: 1.3rem; color: #5f6368; margin-bottom: 12px; display: flex; align-items: center; }
+        .score {
+            background-color: var(--mdc-theme-primary);
+            color: white;
+            border-radius: 50%;
+            width: 35px; /* Larger score circle */
+            height: 35px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-left: 12px;
+            box-shadow: var(--mdc-elevation-dp2);
+        }
+        .report-list { list-style-type: none; padding-left: 0; }
+        .report-list li {
+            background-color: var(--mdc-theme-background);
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border-left: 5px solid #dadce0;
+            line-height: 1.7;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            font-size: 0.95rem;
+        }
+        .report-list li:hover { background-color: #f0f0f0; border-left-color: var(--mdc-theme-primary); }
+
+        .status-assessment {
+            font-size: 1.4rem;
+            font-weight: 600;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom:20px;
+            border: 2px solid;
+            text-align: center;
+            box-shadow: var(--mdc-elevation-dp2);
+        }
+        .status-assessment.alive { color: var(--mdc-theme-secondary); background-color: #e6f4ea; border-color: #a8dadc; }
+        .status-assessment.dead { color: var(--mdc-theme-error); background-color: #fce8e6; border-color: #f28b82; }
+        .status-assessment.neutral { color: #5f6368; background-color: #f1f3f4; border-color: #dadce0; }
+
+        #historyArea h2, #historyArea h3 { text-align: center; color: var(--mdc-theme-on-surface); }
+        .history-entry {
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            padding: 18px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+            background-color: var(--mdc-theme-surface);
+            box-shadow: var(--mdc-elevation-dp2);
+        }
+        .history-entry:hover { background-color: #f8f9fa; box-shadow: var(--mdc-elevation-dp4); }
+        .history-summary { display: flex; justify-content: space-between; font-weight: 500; color: #5f6368; font-size: 1rem;}
+        .history-summary span:first-child { color: var(--mdc-theme-primary); }
+
+        #replayTranscript p { margin: 8px 0; padding: 10px 12px; border-radius: 6px; transition: background-color 0.2s ease; font-size: 0.95rem;}
+        #replayTranscript .highlight { background-color: #e8f0fe; }
+        #replayContainer h2 { border-bottom: none; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background-color: var(--mdc-theme-surface);
+            margin: 8% auto;
+            padding: 30px;
+            border: 1px solid #dadce0;
+            width: 90%;
+            max-width: 650px;
+            border-radius: 12px;
+            box-shadow: var(--mdc-elevation-dp8);
+            position: relative;
+        }
+        .modal-content h2, .modal-content h3 { color: var(--mdc-theme-on-surface); text-align: center; margin-bottom: 20px;}
+        .close-btn {
+            color: #707070;
+            float: right;
+            font-size: 36px;
+            font-weight: normal; /* Lighter font weight for 'x' */
+            line-height: 0.7;
+            position: absolute;
+            top: 15px;
+            right: 25px;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+        .close-btn:hover, .close-btn:focus { color: var(--mdc-theme-error); text-decoration: none; }
+        .profile-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+            font-size: 0.95rem;
+            color: #3c4043;
+        }
+        .profile-item:last-child { border-bottom: none; }
+        .profile-actions button { margin-left: 10px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #5f6368;
+            font-size: 0.9rem;
+        }
+        .form-group input[type="text"], .form-group textarea, .form-group select {
+            width: calc(100% - 24px); /* Account for padding */
+        }
+        .form-group textarea { min-height: 80px; resize: vertical;}
+
+        #authArea {
+            margin-bottom: 25px;
+            padding: 25px; /* Padding for the entire #authArea */
+            background-color: var(--mdc-theme-background);
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+            box-shadow: var(--mdc-elevation-dp2);
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* Center content horizontally */
+        }
+        #authArea h3 { margin-top:0; text-align:center; color: var(--mdc-theme-on-surface);}
+
+        /* New wrapper for form content within auth area to control max-width */
+        #authArea .auth-form-content {
+            width: 100%; /* Take full width of its parent (#userNotLoggedIn) */
+            max-width: 350px; /* Constrain the overall width of the form elements */
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Space between inputs and button group */
+            box-sizing: border-box; /* Include padding in width calculations */
+        }
+        /* Specific input styles for #authArea within the new wrapper */
+        #authArea .auth-form-content input {
+            width: 100%; /* Now 100% of the 350px max-width wrapper */
+            margin-bottom: 0; /* Remove existing margin-bottom as gap handles spacing */
+        }
+
+        /* Container for the Sign Up / Login buttons */
+        #authArea .auth-buttons-wrapper {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            width: 100%; /* Take full width of .auth-form-content */
+            margin-bottom: 0; /* Remove existing margin-bottom as gap handles spacing */
+            flex-wrap: nowrap; /* Prevent wrapping on desktop */
+        }
+        #authArea .auth-buttons-wrapper button {
+            width: calc(50% - 8px); /* Take half width minus gap */
+            box-sizing: border-box;
+        }
+
+        #authArea button.google-btn {
+            width: 100%; /* Take full width of .auth-form-content */
+            box-sizing: border-box;
+            margin-top: 12px; /* Space between buttons wrapper and Google button */
+        }
+
+        #userLoggedIn p { margin-bottom: 15px; font-size: 1.1rem; color: #3c4043;}
+        #userLoggedIn #logoutBtn { width: auto; background-color:#707070; }
+        #userLoggedIn #logoutBtn:hover { background-color:#5f6368; }
+        .login-divider { text-align: center; margin: 15px 0; color: #707070; font-size: 0.95rem;}
+
+        #startupDetailsManagementArea, #modeSelectionArea {
+            background-color: #f1f3f4;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom:25px;
+            border: 1px solid #dadce0;
+            box-shadow: var(--mdc-elevation-dp2);
+        }
+        #startupDetailsManagementArea h2, #modeSelectionArea h3 {text-align: center; margin-top: 0; color: var(--mdc-theme-on-surface);}
+
+        #modeSelectionArea .mode-options {
+            display: flex; justify-content: center; gap: 25px; flex-wrap: wrap;
+        }
+        #modeSelectionArea label {
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 1px solid #dadce0;
+            background-color: var(--mdc-theme-surface);
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            cursor: pointer;
+            box-shadow: var(--mdc-elevation-dp1); /* Subtle default elevation */
+        }
+        #modeSelectionArea label:hover { box-shadow: var(--mdc-elevation-dp2); border-color: var(--mdc-theme-primary); }
+        #modeSelectionArea label input[type="radio"] { margin-right: 12px; margin-top: 2px; /* Align radio button better */ }
+        #modeSelectionArea label strong { color: var(--mdc-theme-on-surface); font-size: 1.1rem; }
+        #modeSelectionArea label div { font-size: 0.85rem; color: #5f6368; margin-top: 5px; max-width: 250px;}
+
+        /* DEFAULT HIDDEN FOR JAVASCRIPT-CONTROLLED SECTIONS - Removed !important */
+        #userLoggedIn, #userHistoryControls, #startupDetailsManagementArea,
+        #modeSelectionArea, #pitchingArea, #reportArea, #historyArea {
+            display: none;
+        }
+
+        /* --- Mobile Optimizations (Overrides Desktop Styles) --- */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            .header {
+                flex-direction: column;
+                margin-bottom: 20px;
+                padding-bottom: 15px;
+            }
+
+            .header img {
+                margin-right: 0;
+                margin-bottom: 15px;
+                height: 80px; /* Increased mobile logo size */
+            }
+
+            .header h1 {
+                font-size: 1.8rem;
+                line-height: 1.3;
+            }
+
+            h2 { font-size: 1.4rem; margin-top: 20px; margin-bottom: 10px; }
+            h3 { font-size: 1.1rem; margin-top: 15px; margin-bottom: 8px; }
+
+            .intro-section { padding: 0 10px; }
+            .intro-section h2 { font-size: 1.5rem; margin-bottom: 10px; }
+            .intro-section p { font-size: 1rem; margin-bottom: 15px; }
+            .features-list { flex-direction: column; gap: 10px; margin-top: 20px; }
+            .features-list li { width: 100%; box-sizing: border-box; justify-content: center; }
+
+            .top-controls { flex-direction: column; align-items: stretch; gap: 10px; }
+            .user-ident, .controls-connection { flex-direction: column; gap: 10px; width: 100%; }
+            .user-ident input, .controls-connection input { width: 100%; min-width: unset; }
+
+            /* AUTH AREA STYLES - Mobile Overrides */
+            #authArea {
+                padding: 15px; /* Reduce padding on mobile */
+            }
+            /* Adjust the new wrapper for mobile */
+            #authArea .auth-form-content {
+                max-width: 100%; /* Allow it to expand to full width on mobile */
+                gap: 10px; /* Adjust gap for mobile */
+            }
+            #authArea .auth-form-content input {
+                width: 100%;
+            }
+            /* Container for SignUp/Login buttons - ensure it stacks vertically */
+            #authArea .auth-buttons-wrapper {
+                flex-direction: column; /* Stack them vertically */
+                gap: 10px; /* Smaller gap for stacked buttons */
+                width: 100%;
+            }
+            #authArea .auth-buttons-wrapper button { /* Full width for buttons on mobile */
+                width: 100%;
+            }
+            /* Full width for Google button on mobile */
+            #authArea button.google-btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .btn {
+                width: 100%; /* Full width buttons overall on mobile */
+                box-sizing: border-box;
+                padding: 12px 15px;
+                font-size: 0.95rem;
+            }
+            .action-btn, .stop-btn {
+                min-width: unset;
+                width: 100%;
+            }
+            .controls-stream {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .investor-panel { flex-direction: column; min-height: unset; padding: 15px; gap: 25px; }
+            .investor { width: 100%; }
+            .investor img.avatar { width: 90px; height: 90px; border-width: 3px; }
+            .speech-bubble { max-width: 90%; min-width: 120px; font-size: 0.85rem; padding: 10px 15px; top: -65px; }
+            .speech-bubble.visible { top: -80px; }
+            .container.speech-active .controls-stream { margin-bottom: 80px; }
+
+            .main-interaction-area { flex-direction: column; }
+            .user-speech-area, .full-log-area { min-width: unset; width: 100%; padding: 15px; }
+            #user-transcription { font-size: 0.95rem; }
+            #transcription { font-size: 0.85rem; }
+            .transcription-entry { padding: 8px; margin-bottom: 8px; }
+
+            #reportArea, #historyArea { padding: 15px; }
+            .report-section h2 { font-size: 1.4rem; margin-bottom: 15px; padding-bottom: 8px; }
+            .report-section h3 { font-size: 1.1rem; }
+            .score { width: 30px; height: 30px; font-size: 0.85rem; }
+            .report-list li { padding: 10px 15px; font-size: 0.9rem; }
+            .status-assessment { font-size: 1.1rem; padding: 15px; }
+            .history-entry { padding: 15px; }
+            .history-summary { font-size: 0.9rem; }
+
+            .modal-content { margin: 5% auto; width: 95%; padding: 20px; border-radius: 8px; }
+            .close-btn { font-size: 30px; top: 10px; right: 15px; }
+            .profile-item { flex-direction: column; align-items: flex-start; gap: 8px; }
+            .profile-actions { width: 100%; display: flex; justify-content: flex-end; gap: 8px; }
+            .profile-actions button { margin-left: 0; flex-grow: 1; }
+            .form-group label { font-size: 0.85rem; }
+            .form-group input, .form-group textarea, .form-group select { font-size: 0.95rem; padding: 10px; }
+            #modeSelectionArea .mode-options { flex-direction: column; align-items: center; gap: 15px; }
+            #modeSelectionArea label { width: 90%; box-sizing: border-box; padding: 12px 15px; font-size: 1rem; }
+            #modeSelectionArea label div { font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="logo.png" alt="Company Logo">
+            <h1>AI Pitch Practice - Virtual Boardroom</h1>
+        </div>
+
+        <div id="introSection" class="intro-section">
+            <h2>Conquer Your Pitch. Face a Virtual Boardroom.</h2>
+            <p>
+                Pitching is hard. Getting honest, unbiased feedback is harder. Our platform puts you in front of a panel of AI investors, each with a unique personality, ready to grill you on your idea. Practice your pitch as many times as you need, in a private, judgment-free zone.
+            </p>
+            <ul class="features-list">
+                <li>Realistic Q&A</li>
+                <li>Instant, Brutal Feedback</li>
+                <li>Practice Anonymously</li>
+                <li>Track Your Progress</li>
+            </ul>
+        </div>
+
+        <div id="authArea">
+            <h3>Get Started</h3>
+            <div id="userNotLoggedIn">
+                <div class="auth-form-content">
+                    <input type="email" id="emailInput" placeholder="Email">
+                    <input type="password" id="passwordInput" placeholder="Password">
+                    <div class="auth-buttons-wrapper">
+                        <button id="signUpBtn" class="btn connect-btn">Sign Up</button>
+                        <button id="loginBtn" class="btn connect-btn">Login</button>
+                    </div>
+                    <div class="login-divider">or</div>
+                    <button id="googleSignInBtn" class="btn google-btn">
+                        <img src="https://img.icons8.com/color/48/000000/google-logo.png" alt="Google icon">
+                        Sign in with Google
+                    </button>
+                </div>
+                </div>
+            <div id="userLoggedIn">
+                <p>Logged in as: <span id="userEmailDisplay" style="font-weight:bold;"></span></p>
+                <button id="logoutBtn" class="btn">Logout</button>
+            </div>
+        </div>
+
+        <div class="top-controls">
+            <div class="user-ident" id="userHistoryControls">
+                <input type="email" id="userIdentifier" placeholder="Your email (for history)" readonly>
+                <button id="viewHistoryBtn" class="btn connect-btn">View History</button>
+            </div>
+        </div>
+        <div id="status">Status: Please Login/Sign Up.</div>
+        <div id="timer">1:00</div>
+
+        <div id="startupDetailsManagementArea">
+            <h2>Startup Details</h2>
+            <div class="form-group">
+                <label for="startupProfileSelect">Load Saved Profile:</label>
+                <select id="startupProfileSelect">
+                    <option value="">-- Select a Profile or Enter Details Below --</option>
+                </select>
+            </div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                 <button id="manageProfilesBtn" class="btn" style="background-color:#5f6368; color:white; padding: 12px 24px;">Manage Startup Profiles</button>
+            </div>
+            <p style="text-align: center; color: #5f6368; margin-bottom: 25px; font-size: 0.95rem;">Or, enter/update details below for the current session:</p>
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                <div class="form-group">
+                    <label for="startupNameInput">Startup Name:</label>
+                    <input type="text" id="startupNameInput" placeholder="Your Startup Name">
+                </div>
+                <div class="form-group">
+                    <label for="oneLinerInput">One-Sentence Pitch:</label>
+                    <textarea id="oneLinerInput" placeholder="e.g., We are the GitHub for biologists." maxlength="150"></textarea>
+                </div>
+                <div class="form-group">
+                     <label for="coreProblemInput">Problem You Solve:</label>
+                    <textarea id="coreProblemInput" placeholder="Who has this problem and why is it painful?" maxlength="250"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div id="modeSelectionArea">
+            <h3>Choose Your Practice Mode</h3>
+            <div class="mode-options">
+                <label>
+                    <input type="radio" name="pitchMode" value="strict" checked>
+                    <div>
+                        <strong>Strict Pitch</strong>
+                        <div>A timed 6-min pitch. Lack of clarity will end the session.</div>
+                    </div>
+                </label>
+                <label>
+                    <input type="radio" name="pitchMode" value="drill">
+                    <div>
+                        <strong>Drill Mode</strong>
+                        <div>No timer. Practice answering investor questions back-to-back.</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div class="controls-stream">
+            <button id="actionBtn" class="btn action-btn" disabled>Login/Sign Up to Practice</button>
+            <button id="stopBtn" class="btn stop-btn">End Session</button>
+        </div>
+
+
+        <div id="pitchingArea" class="boardroom-container">
+            <div class="investor-panel">
+                <div class="investor" id="investor-alex-chen"><img src="https://c4.wallpaperflare.com/wallpaper/840/637/166/anonymous-monochrome-suits-tie-wallpaper-preview.jpg" alt="Alex Chen" class="avatar" id="avatar-alex-chen"><div class="investor-name-title">Alex Chen</div><div class="speech-bubble" id="speech-alex-chen"></div></div>
+                <div class="investor" id="investor-maria-santos"><img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTuxgWfhSffaZ_ZFi5MwXfdjhTpqfeEW76-UN8bz4VApX7B7HQf6yljb3CrkTNPuJXh6nU&usqp=CAU" alt="Maria Santos" class="avatar" id="avatar-maria-santos"><div class="investor-name-title">Maria Santos</div><div class="speech-bubble" id="speech-maria-santos"></div></div>
+                <div class="investor" id="investor-ben-carter"><img src="https://w0.peakpx.com/wallpaper/419/972/HD-wallpaper-reborn-live-traje-black-suit-suits-tie.jpg" alt="Ben Carter" class="avatar" id="avatar-ben-carter"><div class="investor-name-title">Ben Carter</div><div class="speech-bubble" id="speech-ben-carter"></div></div>
+            </div>
+            <div class="main-interaction-area">
+                <div class="user-speech-area"><h3>Your Response:</h3><p id="user-transcription"></p></div>
+                <div class="full-log-area"><h3>Full Conversation Log:</h3><div id="transcription"></div></div>
+            </div>
+        </div>
+
+        <div id="reportArea">
+            <div id="reportContent"></div>
+            <div style="text-align:center; margin-top:30px;">
+                <button id="practiceAgainBtn" class="btn action-btn" style="display: none;">Practice Again</button>
+            </div>
+        </div>
+
+        <div id="historyArea">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <h2 style="margin-top:0; margin-bottom:0; text-align:left;">Your Progress Over Time</h2>
+                <button id="backToPracticeBtn" class="btn" style="background-color:#5f6368; color:white;">Back to Practice</button>
+            </div>
+            <canvas id="progressChart" style="margin-bottom:25px;"></canvas>
+            <h3>Session History</h3>
+            <div id="sessionList"></div>
+        </div>
+    </div>
+
+    <div id="profilesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="closeProfilesModal">&times;</span>
+            <h2>Manage Startup Profiles</h2>
+            <div id="profileListContainer" style="margin-bottom: 25px; max-height: 250px; overflow-y: auto; padding-right: 10px;"></div>
+            <button id="openNewProfileFormBtn" class="btn connect-btn" style="display:block; margin: 0 auto 25px auto;">Create New Profile</button>
+            <div id="profileFormContainer" style="display:none; border-top: 1px solid #e0e0e0; padding-top:20px;">
+                <h3 id="profileFormTitle">Create New Profile</h3>
+                <input type="hidden" id="editingProfileId">
+                <div class="form-group">
+                    <label for="modalStartupName">Startup Name:</label>
+                    <input type="text" id="modalStartupName">
+                </div>
+                <div class="form-group">
+                    <label for="modalOneLiner">One-Liner:</label>
+                    <textarea id="modalOneLiner" maxlength="150"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="modalCoreProblem">Problem:</label>
+                    <textarea id="modalCoreProblem" maxlength="250"></textarea>
+                </div>
+                <div style="text-align:right;">
+                    <button type="button" id="cancelProfileFormBtn" class="btn" style="background-color:#707070; color:white; margin-right:15px;">Cancel</button>
+                    <button id="saveProfileBtn" class="btn action-btn">Save Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="vad_recorder.js"></script>
+</body>
+</html>
