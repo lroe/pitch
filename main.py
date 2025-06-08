@@ -77,12 +77,12 @@ else:
 fb_db = None
 try:
     # This path should be correct for the deployment environment
-    SERVICE_ACCOUNT_KEY_PATH = 'pitchine-ed6c2-firebase-adminsdk-fbsvc-11654bf63e.json' [cite: 3]
+    SERVICE_ACCOUNT_KEY_PATH = 'pitchine-ed6c2-firebase-adminsdk-fbsvc-11654bf63e.json'
     if os.path.exists(SERVICE_ACCOUNT_KEY_PATH):
-        cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH) [cite: 3]
+        cred = credentials.Certificate(SERVICE_ACCOUNT_KEY_PATH)
         if not firebase_admin._apps:
-            firebase_admin.initialize_app(cred) [cite: 3]
-        fb_db = firestore.client() [cite: 3]
+            firebase_admin.initialize_app(cred)
+        fb_db = firestore.client()
         print("Firebase Admin SDK initialized successfully.")
     else:
         print(f"ERROR: Firebase service account key not found at {SERVICE_ACCOUNT_KEY_PATH}. Firestore integration will be disabled.")
@@ -95,15 +95,15 @@ PROJECT_ID = None
 speech_client_v2 = None
 try:
     # This path should be correct for the deployment environment
-    SERVICE_ACCOUNT_FILE_GCP = 'semiotic-mender-461407-n2-9d029397fc74.json' [cite: 3]
+    SERVICE_ACCOUNT_FILE_GCP = 'semiotic-mender-461407-n2-9d029397fc74.json'
     if os.path.exists(SERVICE_ACCOUNT_FILE_GCP):
-        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = SERVICE_ACCOUNT_FILE_GCP [cite: 3]
-        with open(SERVICE_ACCOUNT_FILE_GCP, 'r') as f: [cite: 3]
-            data = json.load(f) [cite: 3]
-            PROJECT_ID = data.get('project_id') [cite: 3]
-        if not PROJECT_ID: [cite: 3]
+        os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = SERVICE_ACCOUNT_FILE_GCP
+        with open(SERVICE_ACCOUNT_FILE_GCP, 'r') as f:
+            data = json.load(f)
+            PROJECT_ID = data.get('project_id')
+        if not PROJECT_ID:
             raise ValueError("Google Cloud Project ID could not be determined from the service account file.")
-        speech_client_v2 = SpeechClient(client_options=ClientOptions(api_endpoint="us-central1-speech.googleapis.com")) [cite: 3]
+        speech_client_v2 = SpeechClient(client_options=ClientOptions(api_endpoint="us-central1-speech.googleapis.com"))
         print(f"Google Cloud Speech v2 client initialized for project: {PROJECT_ID}")
     else:
         print(f"ERROR: GCP service account key not found at {SERVICE_ACCOUNT_FILE_GCP}. Speech-to-Text will be disabled.")
@@ -118,12 +118,12 @@ pitch_eval_model = None
 analysis_model = None
 try:
     # In a production environment like Render, secrets are set as environment variables.
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY') [cite: 3]
-    if GEMINI_API_KEY: [cite: 3]
-        genai.configure(api_key=GEMINI_API_KEY) [cite: 3]
-        moderation_model = genai.GenerativeModel("gemini-1.5-pro-latest") [cite: 3]
-        pitch_eval_model = genai.GenerativeModel("gemini-1.5-pro-latest") [cite: 3]
-        analysis_model = genai.GenerativeModel("gemini-1.5-pro-latest") [cite: 3]
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+    if GEMINI_API_KEY:
+        genai.configure(api_key=GEMINI_API_KEY)
+        moderation_model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        pitch_eval_model = genai.GenerativeModel("gemini-1.5-pro-latest")
+        analysis_model = genai.GenerativeModel("gemini-1.5-pro-latest")
         print("Gemini API key loaded from environment variable. All models initialized.")
     else:
         print("ERROR: GEMINI_API_KEY not found in environment variables. Gemini models will not be available.")
@@ -131,10 +131,10 @@ except Exception as e:
     print(f"ERROR: Could not get Gemini API key from environment or initialize models: {e}")
 
 # --- Storage Setup ---
-STORAGE_DIR = "pitch_history" [cite: 3]
-AUDIO_REPLAY_DIR = os.path.join(STORAGE_DIR, "audio_replays") [cite: 3]
-os.makedirs(STORAGE_DIR, exist_ok=True) [cite: 3]
-os.makedirs(AUDIO_REPLAY_DIR, exist_ok=True) [cite: 3]
+STORAGE_DIR = "pitch_history"
+AUDIO_REPLAY_DIR = os.path.join(STORAGE_DIR, "audio_replays")
+os.makedirs(STORAGE_DIR, exist_ok=True)
+os.makedirs(AUDIO_REPLAY_DIR, exist_ok=True)
 
 
 # --- Investor Persona Definitions ---
@@ -237,75 +237,75 @@ INVESTOR_PERSONAS={
       - Your output should be a single, strategic question or a termination statement.
       """
     }
-} [cite: 3]
+}
 
 
 # --- KILL SWITCH EVALUATION FUNCTIONS ---
-async def check_for_inappropriate_content(text: str, model: genai.GenerativeModel): [cite: 3]
-    if not text.strip(): return True, "No content to moderate." [cite: 3]
-    if not model: return True, "Moderation model not available." [cite: 3]
-    prompt = f"""You are a strict moderator for a professional startup pitch meeting. Analyze the following founder's statement. Your only job is to determine if the statement is abusive, hateful, contains slurs, is sexually explicit, or is a clear attempt to troll. If the statement is acceptable for a professional (even if bad) pitch, respond with ONLY the word "SAFE". If the statement is unacceptable, respond with ONLY the word "UNSAFE". Founder's statement: "{text}". Your response:""" [cite: 3]
+async def check_for_inappropriate_content(text: str, model: genai.GenerativeModel):
+    if not text.strip(): return True, "No content to moderate."
+    if not model: return True, "Moderation model not available."
+    prompt = f"""You are a strict moderator for a professional startup pitch meeting. Analyze the following founder's statement. Your only job is to determine if the statement is abusive, hateful, contains slurs, is sexually explicit, or is a clear attempt to troll. If the statement is acceptable for a professional (even if bad) pitch, respond with ONLY the word "SAFE". If the statement is unacceptable, respond with ONLY the word "UNSAFE". Founder's statement: "{text}". Your response:"""
     try:
-        response = await run_in_threadpool(model.generate_content, prompt) [cite: 3]
-        decision = response.text.strip().upper() [cite: 3]
-        if decision == "UNSAFE": [cite: 3]
-            return False, "Inappropriate or abusive language detected." [cite: 3]
-        return True, "Content is safe." [cite: 3]
+        response = await run_in_threadpool(model.generate_content, prompt)
+        decision = response.text.strip().upper()
+        if decision == "UNSAFE":
+            return False, "Inappropriate or abusive language detected."
+        return True, "Content is safe."
     except Exception as e:
-        return True, "Moderation check errored out." [cite: 3]
+        return True, "Moderation check errored out."
 
-async def evaluate_pitch_opening(text: str, model: genai.GenerativeModel): [cite: 3]
-    if not text.strip(): return 'TERMINATE', "Founder said nothing." [cite: 3]
-    if not model: return 'PROCEED', "Pitch evaluation model not available." [cite: 3]
-    prompt = f"""You are a seasoned early-stage investor. You have just heard a founder's opening statement. Your task is to decide if it's a waste of time. A pitch is a 'waste of time' if it's completely incoherent, uses excessive jargon with no substance, or fails to clearly state what the company actually does. If the pitch is merely unpolished but you can figure out what they do, it's acceptable. If the pitch is a waste of time, respond with ONLY the word 'TERMINATE'. Otherwise, respond with ONLY the word 'PROCEED'. Founder's opening statement: "{text}". Your response:""" [cite: 3]
+async def evaluate_pitch_opening(text: str, model: genai.GenerativeModel):
+    if not text.strip(): return 'TERMINATE', "Founder said nothing."
+    if not model: return 'PROCEED', "Pitch evaluation model not available."
+    prompt = f"""You are a seasoned early-stage investor. You have just heard a founder's opening statement. Your task is to decide if it's a waste of time. A pitch is a 'waste of time' if it's completely incoherent, uses excessive jargon with no substance, or fails to clearly state what the company actually does. If the pitch is merely unpolished but you can figure out what they do, it's acceptable. If the pitch is a waste of time, respond with ONLY the word 'TERMINATE'. Otherwise, respond with ONLY the word 'PROCEED'. Founder's opening statement: "{text}". Your response:"""
     try:
-        response = await run_in_threadpool(model.generate_content, prompt) [cite: 3]
-        decision = response.text.strip().upper() [cite: 3]
-        if decision == "TERMINATE": [cite: 3]
-            return 'TERMINATE', "The opening pitch was unclear and a waste of time." [cite: 3]
-        return 'PROCEED', "Pitch is clear enough." [cite: 3]
+        response = await run_in_threadpool(model.generate_content, prompt)
+        decision = response.text.strip().upper()
+        if decision == "TERMINATE":
+            return 'TERMINATE', "The opening pitch was unclear and a waste of time."
+        return 'PROCEED', "Pitch is clear enough."
     except Exception as e:
-        return 'PROCEED', "Evaluation check errored out." [cite: 3]
+        return 'PROCEED', "Evaluation check errored out."
 
 
 # --- PITCH ANALYSIS CLASS ---
-class PitchAnalyzer: [cite: 3]
-    def __init__(self, conversation_history): [cite: 3]
-        self.conversation_history = conversation_history [cite: 3]
-        self.analysis_results = {} [cite: 3]
-        self.analysis_model = analysis_model [cite: 3]
-    def _format_history_for_analysis(self): [cite: 3]
-        return "\n".join(f"{entry.get('role', 'System')}: {entry.get('content', '')}" for entry in self.conversation_history) [cite: 3]
-    async def _get_analysis_from_gemini(self, prompt, max_retries=2): [cite: 3]
-        if not self.analysis_model: return "Error: Analysis model not available." [cite: 3]
-        for attempt in range(max_retries): [cite: 3]
+class PitchAnalyzer:
+    def __init__(self, conversation_history):
+        self.conversation_history = conversation_history
+        self.analysis_results = {}
+        self.analysis_model = analysis_model
+    def _format_history_for_analysis(self):
+        return "\n".join(f"{entry.get('role', 'System')}: {entry.get('content', '')}" for entry in self.conversation_history)
+    async def _get_analysis_from_gemini(self, prompt, max_retries=2):
+        if not self.analysis_model: return "Error: Analysis model not available."
+        for attempt in range(max_retries):
             try:
-                response = await run_in_threadpool(self.analysis_model.generate_content, prompt) [cite: 3]
-                return response.text.strip() [cite: 3]
+                response = await run_in_threadpool(self.analysis_model.generate_content, prompt)
+                return response.text.strip()
             except Exception as e:
-                if attempt >= max_retries - 1: return f"Error: Could not get a response from the analysis model. Details: {e}" [cite: 3]
-        return "Error: Analysis failed after multiple retries." [cite: 3]
-    def _parse_numerical_score(self, text_response, scale_max=5): [cite: 3]
-        if text_response is None: return None [cite: 3]
-        match = re.search(r'\b([1-5])\b', text_response) [cite: 3]
-        if match: [cite: 3]
+                if attempt >= max_retries - 1: return f"Error: Could not get a response from the analysis model. Details: {e}"
+        return "Error: Analysis failed after multiple retries."
+    def _parse_numerical_score(self, text_response, scale_max=5):
+        if text_response is None: return None
+        match = re.search(r'\b([1-5])\b', text_response)
+        if match:
             try:
-                score = int(match.group(1)); [cite: 3]
-                if 1 <= score <= scale_max: return score [cite: 3]
-            except (ValueError, IndexError): pass [cite: 3]
-        return "N/A" [cite: 3]
-    async def analyze_pitch(self): [cite: 3]
-        full_conversation_text = self._format_history_for_analysis() [cite: 3]
-        dad_prompt = f"Based on the following startup pitch conversation, assess if it sounds 'Default Alive' or 'Default Dead'. A '[System: ... hesitation]' note indicates the founder was unprepared for a question or was silent. This is a major negative signal. Factor this heavily into your assessment of their viability.\n\nConversation:\n{full_conversation_text}\n\nAssessment:" [cite: 3]
-        dad_assessment = await self._get_analysis_from_gemini(dad_prompt) [cite: 3]
-        self.analysis_results["default_alive_dead"] = dad_assessment [cite: 3]
-        pillars_config = { [cite: 3]
+                score = int(match.group(1));
+                if 1 <= score <= scale_max: return score
+            except (ValueError, IndexError): pass
+        return "N/A"
+    async def analyze_pitch(self):
+        full_conversation_text = self._format_history_for_analysis()
+        dad_prompt = f"Based on the following startup pitch conversation, assess if it sounds 'Default Alive' or 'Default Dead'. A '[System: ... hesitation]' note indicates the founder was unprepared for a question or was silent. This is a major negative signal. Factor this heavily into your assessment of their viability.\n\nConversation:\n{full_conversation_text}\n\nAssessment:"
+        dad_assessment = await self._get_analysis_from_gemini(dad_prompt)
+        self.analysis_results["default_alive_dead"] = dad_assessment
+        pillars_config = {
             "Problem/Solution Fit": "Assess if a hair-on-fire problem was articulated and if the solution is obviously better for those users.",
             "Formidable Founders (Clarity & Conviction)": "Assess how 'formidable' the founders seem based on clarity, directness, and confidence. Critically, if you see a '[System: ... hesitation]' note, it means the founder froze under pressure. This should lead to a very low score for this pillar.",
             "Market / 'Why Now?'": "Evaluate the articulation of market size, opportunity, and the timeliness ('Why Now?') of the solution."
         }
-        self.analysis_results["pillars"] = {} [cite: 3]
-        for pillar_name, detail in pillars_config.items(): [cite: 3]
+        self.analysis_results["pillars"] = {}
+        for pillar_name, detail in pillars_config.items():
             score_prompt = f"""
 **Primary Context**: An initial assessment of the pitch concluded the startup is '{dad_assessment}'.
 **Your Task**: Based on this primary context AND the full conversation below, score the specific pillar '{pillar_name}' from 1 (Poor) to 5 (Excellent).
@@ -314,7 +314,7 @@ class PitchAnalyzer: [cite: 3]
 - **Output Format**: Output *ONLY* the numerical score (1-5).
 **Full Conversation:**
 {full_conversation_text}
-**Score for {pillar_name}:**""" [cite: 3]
+**Score for {pillar_name}:**"""
             feedback_prompt = f"""
 **Primary Context**: An initial assessment of the pitch concluded the startup is '{dad_assessment}'.
 **Your Task**: Based on the primary context and the full conversation, provide specific, bullet-point feedback on '{pillar_name}'.
@@ -322,10 +322,10 @@ class PitchAnalyzer: [cite: 3]
 - **Output Format**: Bullet points.
 **Full Conversation:**
 {full_conversation_text}
-**Feedback for {pillar_name}:**""" [cite: 3]
-            score_response = await self._get_analysis_from_gemini(score_prompt) [cite: 3]
-            feedback_response = await self._get_analysis_from_gemini(feedback_prompt) [cite: 3]
-            self.analysis_results["pillars"][pillar_name] = { [cite: 3]
+**Feedback for {pillar_name}:**"""
+            score_response = await self._get_analysis_from_gemini(score_prompt)
+            feedback_response = await self._get_analysis_from_gemini(feedback_prompt)
+            self.analysis_results["pillars"][pillar_name] = {
                 "score": self._parse_numerical_score(score_response),
                 "feedback": [line.strip() for line in feedback_response.splitlines() if line.strip()]
             }
@@ -336,92 +336,92 @@ class PitchAnalyzer: [cite: 3]
 - **Output Format**: Bullet points.
 **Full Conversation:**
 {full_conversation_text}
-**Brutally Honest Feedback:**""" [cite: 3]
-        self.analysis_results["brutal_feedback"] = [line.strip() for line in (await self._get_analysis_from_gemini(brutal_prompt)).splitlines() if line.strip()] [cite: 3]
+**Brutally Honest Feedback:**"""
+        self.analysis_results["brutal_feedback"] = [line.strip() for line in (await self._get_analysis_from_gemini(brutal_prompt)).splitlines() if line.strip()]
         top_3_prompt = f"""
 **Primary Context**: An initial assessment of the pitch concluded the startup is '{dad_assessment}'.
 **Your Task**: Based on the primary context and the conversation, identify the top 3 most critical areas to improve.
 - **Instructions**: If the assessment was 'Default Dead' or involved hesitation, your suggestions must directly address the root causes (e.g., 'Answering questions under pressure,' 'Articulating the core problem clearly').
 **Full Conversation:**
 {full_conversation_text}
-**Top 3 Areas for Next Practice:**""" [cite: 3]
-        self.analysis_results["top_3_areas"] = [line.strip() for line in (await self._get_analysis_from_gemini(top_3_prompt)).splitlines() if line.strip()] [cite: 3]
-        return self.analysis_results [cite: 3]
+**Top 3 Areas for Next Practice:**"""
+        self.analysis_results["top_3_areas"] = [line.strip() for line in (await self._get_analysis_from_gemini(top_3_prompt)).splitlines() if line.strip()]
+        return self.analysis_results
 
 # --- SESSION MANAGEMENT ---
-def save_session_to_firestore(user_uid, session_id, report_data): [cite: 3]
-    if not fb_db: [cite: 3]
-        print("Firestore not initialized. Cannot save session.") [cite: 3]
-        return [cite: 3]
-    if not user_uid or not session_id: [cite: 3]
-        print("Cannot save session, user_uid or session_id missing.") [cite: 3]
-        return [cite: 3]
+def save_session_to_firestore(user_uid, session_id, report_data):
+    if not fb_db:
+        print("Firestore not initialized. Cannot save session.")
+        return
+    if not user_uid or not session_id:
+        print("Cannot save session, user_uid or session_id missing.")
+        return
     try:
-        session_ref = fb_db.collection('users').document(user_uid).collection('sessions').document(session_id) [cite: 3]
-        report_data_with_timestamp = report_data.copy() [cite: 3]
-        report_data_with_timestamp['timestamp'] = firestore.SERVER_TIMESTAMP [cite: 3]
-        session_ref.set(report_data_with_timestamp) [cite: 3]
-        print(f"Session for user {user_uid}, session {session_id} saved to Firestore.") [cite: 3]
+        session_ref = fb_db.collection('users').document(user_uid).collection('sessions').document(session_id)
+        report_data_with_timestamp = report_data.copy()
+        report_data_with_timestamp['timestamp'] = firestore.SERVER_TIMESTAMP
+        session_ref.set(report_data_with_timestamp)
+        print(f"Session for user {user_uid}, session {session_id} saved to Firestore.")
     except Exception as e:
-        print(f"Error saving session to Firestore: {e}") [cite: 3]
+        print(f"Error saving session to Firestore: {e}")
 
-def get_history_from_firestore(user_uid): [cite: 3]
-    if not fb_db: [cite: 3]
-        print("Firestore not initialized. Cannot fetch history.") [cite: 3]
-        return [] [cite: 3]
-    if not user_uid: [cite: 3]
-        return [] [cite: 3]
+def get_history_from_firestore(user_uid):
+    if not fb_db:
+        print("Firestore not initialized. Cannot fetch history.")
+        return []
+    if not user_uid:
+        return []
     try:
-        sessions_ref = fb_db.collection('users').document(user_uid).collection('sessions').order_by('timestamp', direction=firestore.Query.DESCENDING).stream() [cite: 3]
-        user_history = [] [cite: 3]
-        for session_doc in sessions_ref: [cite: 3]
-            doc_data = session_doc.to_dict() [cite: 3]
-            if 'timestamp' in doc_data and hasattr(doc_data['timestamp'], 'isoformat'): [cite: 3]
-                 doc_data['timestamp'] = doc_data['timestamp'].isoformat() [cite: 3]
-            user_history.append(doc_data) [cite: 3]
-        print(f"Found {len(user_history)} historical records for user {user_uid} from Firestore.") [cite: 3]
-        return user_history [cite: 3]
+        sessions_ref = fb_db.collection('users').document(user_uid).collection('sessions').order_by('timestamp', direction=firestore.Query.DESCENDING).stream()
+        user_history = []
+        for session_doc in sessions_ref:
+            doc_data = session_doc.to_dict()
+            if 'timestamp' in doc_data and hasattr(doc_data['timestamp'], 'isoformat'):
+                 doc_data['timestamp'] = doc_data['timestamp'].isoformat()
+            user_history.append(doc_data)
+        print(f"Found {len(user_history)} historical records for user {user_uid} from Firestore.")
+        return user_history
     except Exception as e:
-        print(f"Error reading history from Firestore: {e}") [cite: 3]
-        return [] [cite: 3]
+        print(f"Error reading history from Firestore: {e}")
+        return []
 
-def save_session_to_local_file(user_identifier, report_data): [cite: 3]
-    if not user_identifier: return [cite: 3]
-    filename = "".join(c for c in user_identifier if c.isalnum() or c in ('_','-')).rstrip() [cite: 3]
-    filepath = os.path.join(STORAGE_DIR, f"{filename}.jsonl") [cite: 3]
+def save_session_to_local_file(user_identifier, report_data):
+    if not user_identifier: return
+    filename = "".join(c for c in user_identifier if c.isalnum() or c in ('_','-')).rstrip()
+    filepath = os.path.join(STORAGE_DIR, f"{filename}.jsonl")
     try:
-        session_record = {"timestamp": datetime.now().isoformat(), "report": report_data} [cite: 3]
-        with open(filepath, 'a') as f: f.write(json.dumps(session_record) + '\n') [cite: 3]
-    except Exception as e: print(f"Error saving session to local file: {e}") [cite: 3]
+        session_record = {"timestamp": datetime.now().isoformat(), "report": report_data}
+        with open(filepath, 'a') as f: f.write(json.dumps(session_record) + '\n')
+    except Exception as e: print(f"Error saving session to local file: {e}")
 
-def get_history_from_local_file(user_identifier): [cite: 3]
-    if not user_identifier: return [] [cite: 3]
-    filename = "".join(c for c in user_identifier if c.isalnum() or c in ('_','-')).rstrip() [cite: 3]
-    filepath = os.path.join(STORAGE_DIR, f"{filename}.jsonl") [cite: 3]
-    if not os.path.exists(filepath): return [] [cite: 3]
+def get_history_from_local_file(user_identifier):
+    if not user_identifier: return []
+    filename = "".join(c for c in user_identifier if c.isalnum() or c in ('_','-')).rstrip()
+    filepath = os.path.join(STORAGE_DIR, f"{filename}.jsonl")
+    if not os.path.exists(filepath): return []
     try:
-        user_history = [] [cite: 3]
-        with open(filepath, 'r') as f: [cite: 3]
-            for line in f: [cite: 3]
-                if line.strip(): user_history.append(json.loads(line)) [cite: 3]
-        return user_history [cite: 3]
-    except Exception as e: return [] [cite: 3]
+        user_history = []
+        with open(filepath, 'r') as f:
+            for line in f:
+                if line.strip(): user_history.append(json.loads(line))
+        return user_history
+    except Exception as e: return []
 
-class ConnectionManager: [cite: 3]
-    def __init__(self): [cite: 3]
-        self.active_connections: dict[WebSocket, dict] = {} [cite: 3]
-        self.investor_names = list(INVESTOR_PERSONAS.keys()) [cite: 3]
-    def initialize_investors(self): [cite: 3]
-        if not GEMINI_API_KEY: return None [cite: 3]
-        investor_chats = {} [cite: 3]
-        for name, persona in INVESTOR_PERSONAS.items(): [cite: 3]
-            if persona.get("system_prompt") == "...": continue [cite: 3]
-            model_instance = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=persona["system_prompt"]) [cite: 3]
-            investor_chats[name] = model_instance.start_chat(history=[]) [cite: 3]
-        return investor_chats [cite: 3]
-    async def connect(self, websocket: WebSocket, user_uid: str = None): [cite: 3]
-        await websocket.accept() [cite: 3]
-        self.active_connections[websocket] = { [cite: 3]
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: dict[WebSocket, dict] = {}
+        self.investor_names = list(INVESTOR_PERSONAS.keys())
+    def initialize_investors(self):
+        if not GEMINI_API_KEY: return None
+        investor_chats = {}
+        for name, persona in INVESTOR_PERSONAS.items():
+            if persona.get("system_prompt") == "...": continue
+            model_instance = genai.GenerativeModel(model_name="gemini-1.5-pro-latest", system_instruction=persona["system_prompt"])
+            investor_chats[name] = model_instance.start_chat(history=[])
+        return investor_chats
+    async def connect(self, websocket: WebSocket, user_uid: str = None):
+        await websocket.accept()
+        self.active_connections[websocket] = {
             "user_uid": user_uid,
             "investor_chats": self.initialize_investors(),
             "investor_turn_index": 0,
@@ -434,36 +434,36 @@ class ConnectionManager: [cite: 3]
             "current_session_id": f"session_{datetime.now().timestamp()}",
             "latest_audio_blob": None
         }
-    def disconnect(self, websocket: WebSocket): [cite: 3]
-        if websocket in self.active_connections: [cite: 3]
-            del self.active_connections[websocket] [cite: 3]
-    def get_connection_data(self, websocket: WebSocket): [cite: 3]
-        return self.active_connections.get(websocket) [cite: 3]
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            del self.active_connections[websocket]
+    def get_connection_data(self, websocket: WebSocket):
+        return self.active_connections.get(websocket)
 
-    def reset_session_state(self, websocket: WebSocket): [cite: 3]
-        conn_data = self.get_connection_data(websocket) [cite: 3]
-        if conn_data: [cite: 3]
-            conn_data["conversation_history"] = [] [cite: 3]
-            conn_data["last_investor_name"] = None [cite: 3]
-            conn_data["startup_details"] = None [cite: 3]
-            conn_data["initial_context_sent"] = False [cite: 3]
-            conn_data["opening_evaluated"] = False [cite: 3]
-            conn_data["mode"] = "strict" [cite: 3]
-            conn_data["investor_chats"] = self.initialize_investors() [cite: 3]
-            conn_data["investor_turn_index"] = 0 [cite: 3]
-            conn_data["latest_audio_blob"] = None [cite: 3]
-            print(f"Server-side session state reset for websocket: {websocket.client}") [cite: 3]
+    def reset_session_state(self, websocket: WebSocket):
+        conn_data = self.get_connection_data(websocket)
+        if conn_data:
+            conn_data["conversation_history"] = []
+            conn_data["last_investor_name"] = None
+            conn_data["startup_details"] = None
+            conn_data["initial_context_sent"] = False
+            conn_data["opening_evaluated"] = False
+            conn_data["mode"] = "strict"
+            conn_data["investor_chats"] = self.initialize_investors()
+            conn_data["investor_turn_index"] = 0
+            conn_data["latest_audio_blob"] = None
+            print(f"Server-side session state reset for websocket: {websocket.client}")
 
-    def get_next_investor(self, websocket: WebSocket): [cite: 3]
-        conn_data = self.get_connection_data(websocket) [cite: 3]
-        if not conn_data or not self.investor_names or not conn_data.get("investor_chats"): return None [cite: 3]
-        valid_investor_names = [name for name in self.investor_names if name in conn_data["investor_chats"]] [cite: 3]
-        if not valid_investor_names: return None [cite: 3]
-        current_index = conn_data["investor_turn_index"] % len(valid_investor_names) [cite: 3]
-        investor_name = valid_investor_names[current_index] [cite: 3]
-        conn_data["investor_turn_index"] = (conn_data["investor_turn_index"] + 1) [cite: 3]
-        conn_data["last_investor_name"] = investor_name [cite: 3]
-        return investor_name [cite: 3]
+    def get_next_investor(self, websocket: WebSocket):
+        conn_data = self.get_connection_data(websocket)
+        if not conn_data or not self.investor_names or not conn_data.get("investor_chats"): return None
+        valid_investor_names = [name for name in self.investor_names if name in conn_data["investor_chats"]]
+        if not valid_investor_names: return None
+        current_index = conn_data["investor_turn_index"] % len(valid_investor_names)
+        investor_name = valid_investor_names[current_index]
+        conn_data["investor_turn_index"] = (conn_data["investor_turn_index"] + 1)
+        conn_data["last_investor_name"] = investor_name
+        return investor_name
 manager = ConnectionManager()
 
 # --- SERVER-SIDE AUTH ENDPOINTS ---
@@ -504,187 +504,187 @@ async def auth_via_google(request: Request):
 
 # --- API ENDPOINTS ---
 @app.post("/upload-audio/{session_id}")
-async def upload_audio(session_id: str, file: UploadFile = File(...)): [cite: 3]
-    safe_session_id = "".join(c for c in session_id if c.isalnum() or c in ('_','-')).rstrip() [cite: 3]
-    if not safe_session_id: [cite: 3]
+async def upload_audio(session_id: str, file: UploadFile = File(...)):
+    safe_session_id = "".join(c for c in session_id if c.isalnum() or c in ('_','-')).rstrip()
+    if not safe_session_id:
         return {"error": "Invalid session ID"}, 400
-    file_path = os.path.join(AUDIO_REPLAY_DIR, f"{safe_session_id}.webm") [cite: 3]
+    file_path = os.path.join(AUDIO_REPLAY_DIR, f"{safe_session_id}.webm")
     try:
-        async with aiofiles.open(file_path, "wb") as buffer: [cite: 3]
-            content = await file.read() [cite: 3]
-            await buffer.write(content) [cite: 3]
+        async with aiofiles.open(file_path, "wb") as buffer:
+            content = await file.read()
+            await buffer.write(content)
     except Exception as e:
         return {"error": f"Failed to save file: {e}"}, 500
-    return {"status": "success", "path": f"/replays/{safe_session_id}.webm"} [cite: 3]
+    return {"status": "success", "path": f"/replays/{safe_session_id}.webm"}
 
-async def verify_id_token(token: str): [cite: 3]
-    if not token: return None [cite: 3]
+async def verify_id_token(token: str):
+    if not token: return None
     try:
-        if fb_db: [cite: 3]
-            decoded_token = auth.verify_id_token(token) [cite: 3]
-            return decoded_token['uid'] [cite: 3]
+        if fb_db:
+            decoded_token = auth.verify_id_token(token)
+            return decoded_token['uid']
         else:
-            print("Firebase Admin not initialized, using mock UID for token.") [cite: 3]
-            if token.startswith("mock_token_for_"): [cite: 3]
-                return token.replace("mock_token_for_", "") [cite: 3]
-            return "mock_dev_user" [cite: 3]
+            print("Firebase Admin not initialized, using mock UID for token.")
+            if token.startswith("mock_token_for_"):
+                return token.replace("mock_token_for_", "")
+            return "mock_dev_user"
     except Exception as e:
-        print(f"Token verification failed: {e}") [cite: 3]
-        return None [cite: 3]
+        print(f"Token verification failed: {e}")
+        return None
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket, token: str = None): [cite: 3]
-    user_uid = None [cite: 3]
-    if token: [cite: 3]
-        user_uid = await verify_id_token(token) [cite: 3]
-        if not user_uid: [cite: 3]
-            await websocket.accept() [cite: 3]
-            await websocket.send_json({"type": "error", "text": "Invalid authentication token."}) [cite: 3]
-            await websocket.close(code=1008) [cite: 3]
-            return [cite: 3]
+async def websocket_endpoint(websocket: WebSocket, token: str = None):
+    user_uid = None
+    if token:
+        user_uid = await verify_id_token(token)
+        if not user_uid:
+            await websocket.accept()
+            await websocket.send_json({"type": "error", "text": "Invalid authentication token."})
+            await websocket.close(code=1008)
+            return
 
-    await manager.connect(websocket, user_uid) [cite: 3]
-    conn_data = manager.get_connection_data(websocket) [cite: 3]
+    await manager.connect(websocket, user_uid)
+    conn_data = manager.get_connection_data(websocket)
 
-    if not all([speech_client_v2, PROJECT_ID, GEMINI_API_KEY, moderation_model, pitch_eval_model, analysis_model]): [cite: 3]
-        await websocket.send_json({"type": "error", "text": "Server setup incomplete. A required model or client is missing."}); await websocket.close(code=1011); return [cite: 3]
-    if not conn_data or not conn_data.get("investor_chats") or not any(conn_data.get("investor_chats")): [cite: 3]
-        await websocket.send_json({"type": "error", "text": "Server error: Investor personas not initialized correctly."}); await websocket.close(code=1011); return [cite: 3]
+    if not all([speech_client_v2, PROJECT_ID, GEMINI_API_KEY, moderation_model, pitch_eval_model, analysis_model]):
+        await websocket.send_json({"type": "error", "text": "Server setup incomplete. A required model or client is missing."}); await websocket.close(code=1011); return
+    if not conn_data or not conn_data.get("investor_chats") or not any(conn_data.get("investor_chats")):
+        await websocket.send_json({"type": "error", "text": "Server error: Investor personas not initialized correctly."}); await websocket.close(code=1011); return
 
-    recognizer_path = f"projects/{PROJECT_ID}/locations/us-central1/recognizers/_" [cite: 3]
+    recognizer_path = f"projects/{PROJECT_ID}/locations/us-central1/recognizers/_"
 
     try:
-        while True: [cite: 3]
-            data = await websocket.receive() [cite: 3]
-            if 'text' in data: [cite: 3]
-                message = json.loads(data['text']) [cite: 3]
-                msg_type = message.get("type") [cite: 3]
-                current_session_id_from_conn = conn_data.get("current_session_id") [cite: 3]
+        while True:
+            data = await websocket.receive()
+            if 'text' in data:
+                message = json.loads(data['text'])
+                msg_type = message.get("type")
+                current_session_id_from_conn = conn_data.get("current_session_id")
 
-                if msg_type == "startup_details": [cite: 3]
-                    manager.reset_session_state(websocket) [cite: 3]
-                    conn_data['startup_details'] = message.get("data") [cite: 3]
-                    conn_data['mode'] = message.get("data", {}).get("mode", "strict") [cite: 3]
+                if msg_type == "startup_details":
+                    manager.reset_session_state(websocket)
+                    conn_data['startup_details'] = message.get("data")
+                    conn_data['mode'] = message.get("data", {}).get("mode", "strict")
 
-                    if conn_data['mode'] == 'drill': [cite: 3]
-                        investor_name = manager.get_next_investor(websocket) [cite: 3]
-                        if not investor_name: [cite: 3]
-                            await websocket.send_json({"type": "error", "text": "No available investors for drill mode."}); continue [cite: 3]
-                        chat_session = conn_data["investor_chats"][investor_name] [cite: 3]
-                        details = conn_data["startup_details"] [cite: 3]
-                        prompt = f"Brief: {details.get('name')} - {details.get('pitch')}. Problem: {details.get('problem')}. Ask your first, single, incisive question to the founder. Do not add any pleasantries. Just ask the question." [cite: 3]
-                        response = await run_in_threadpool(chat_session.send_message, prompt) [cite: 3]
-                        await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": response.text.strip()}) [cite: 3]
+                    if conn_data['mode'] == 'drill':
+                        investor_name = manager.get_next_investor(websocket)
+                        if not investor_name:
+                            await websocket.send_json({"type": "error", "text": "No available investors for drill mode."}); continue
+                        chat_session = conn_data["investor_chats"][investor_name]
+                        details = conn_data["startup_details"]
+                        prompt = f"Brief: {details.get('name')} - {details.get('pitch')}. Problem: {details.get('problem')}. Ask your first, single, incisive question to the founder. Do not add any pleasantries. Just ask the question."
+                        response = await run_in_threadpool(chat_session.send_message, prompt)
+                        await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": response.text.strip()})
 
-                elif msg_type == "process_interim_transcript": [cite: 3]
-                    audio_to_process = conn_data.get('latest_audio_blob') [cite: 3]
-                    transcribed_text = "" [cite: 3]
+                elif msg_type == "process_interim_transcript":
+                    audio_to_process = conn_data.get('latest_audio_blob')
+                    transcribed_text = ""
 
-                    if audio_to_process: [cite: 3]
-                        decoding_config = cloud_speech.ExplicitDecodingConfig(encoding=cloud_speech.ExplicitDecodingConfig.AudioEncoding.WEBM_OPUS, sample_rate_hertz=48000, audio_channel_count=1) [cite: 3]
-                        features_config = cloud_speech.RecognitionFeatures(enable_automatic_punctuation=True) [cite: 3]
-                        request_config = cloud_speech.RecognitionConfig(explicit_decoding_config=decoding_config, language_codes=["en-US"], model="chirp", features=features_config) [cite: 3]
-                        request_v2 = cloud_speech.RecognizeRequest(recognizer=recognizer_path, config=request_config, content=audio_to_process) [cite: 3]
+                    if audio_to_process:
+                        decoding_config = cloud_speech.ExplicitDecodingConfig(encoding=cloud_speech.ExplicitDecodingConfig.AudioEncoding.WEBM_OPUS, sample_rate_hertz=48000, audio_channel_count=1)
+                        features_config = cloud_speech.RecognitionFeatures(enable_automatic_punctuation=True)
+                        request_config = cloud_speech.RecognitionConfig(explicit_decoding_config=decoding_config, language_codes=["en-US"], model="chirp", features=features_config)
+                        request_v2 = cloud_speech.RecognizeRequest(recognizer=recognizer_path, config=request_config, content=audio_to_process)
                         try:
-                            response_v2 = await run_in_threadpool(speech_client_v2.recognize, request=request_v2) [cite: 3]
-                            if response_v2.results and response_v2.results[0].alternatives: [cite: 3]
-                                transcribed_text = response_v2.results[0].alternatives[0].transcript.strip() [cite: 3]
+                            response_v2 = await run_in_threadpool(speech_client_v2.recognize, request=request_v2)
+                            if response_v2.results and response_v2.results[0].alternatives:
+                                transcribed_text = response_v2.results[0].alternatives[0].transcript.strip()
                         except Exception as e:
-                            print(f"Transcription error: {e}") [cite: 3]
+                            print(f"Transcription error: {e}")
                     
-                    conn_data['latest_audio_blob'] = None [cite: 3]
+                    conn_data['latest_audio_blob'] = None
                     # BUG FIX: Always send a response to unlock the frontend, even if transcription is empty.
-                    await websocket.send_json({"type": "user_interim_transcript", "text": transcribed_text}) [cite: 3]
+                    await websocket.send_json({"type": "user_interim_transcript", "text": transcribed_text})
 
-                elif msg_type == "send_composed_text": [cite: 3]
-                    composed_text = message.get("text", "").strip() [cite: 3]
-                    if not composed_text: [cite: 3]
-                        composed_text = "[Silent Response]" [cite: 3]
+                elif msg_type == "send_composed_text":
+                    composed_text = message.get("text", "").strip()
+                    if not composed_text:
+                        composed_text = "[Silent Response]"
                     
                     # This message is for the frontend to log the final user text.
-                    await websocket.send_json({"type": "user", "text": composed_text}) [cite: 3]
+                    await websocket.send_json({"type": "user", "text": composed_text})
                     
-                    is_safe, reason = await check_for_inappropriate_content(composed_text, moderation_model) [cite: 3]
-                    if not is_safe: [cite: 3]
-                        await websocket.send_json({"type": "session_terminated", "text": "This is a waste of time. The meeting is over.", "reason": reason}) [cite: 3]
-                        manager.reset_session_state(websocket); continue [cite: 3]
+                    is_safe, reason = await check_for_inappropriate_content(composed_text, moderation_model)
+                    if not is_safe:
+                        await websocket.send_json({"type": "session_terminated", "text": "This is a waste of time. The meeting is over.", "reason": reason})
+                        manager.reset_session_state(websocket); continue
 
-                    if conn_data['mode'] == 'strict' and not conn_data.get('opening_evaluated'): [cite: 3]
-                        conn_data['opening_evaluated'] = True [cite: 3]
-                        decision, reason = await evaluate_pitch_opening(composed_text, pitch_eval_model) [cite: 3]
-                        if decision == 'TERMINATE': [cite: 3]
-                            await websocket.send_json({"type": "session_terminated", "text": "I don't understand what you do. If you can't explain it clearly, there's no point in continuing. Meeting's over.", "reason": reason}) [cite: 3]
-                            manager.reset_session_state(websocket); continue [cite: 3]
+                    if conn_data['mode'] == 'strict' and not conn_data.get('opening_evaluated'):
+                        conn_data['opening_evaluated'] = True
+                        decision, reason = await evaluate_pitch_opening(composed_text, pitch_eval_model)
+                        if decision == 'TERMINATE':
+                            await websocket.send_json({"type": "session_terminated", "text": "I don't understand what you do. If you can't explain it clearly, there's no point in continuing. Meeting's over.", "reason": reason})
+                            manager.reset_session_state(websocket); continue
                     
-                    investor_name = manager.get_next_investor(websocket) [cite: 3]
-                    if not investor_name or not conn_data["investor_chats"].get(investor_name): [cite: 3]
-                        await websocket.send_json({"type": "error", "text": "No available investors to respond."}); continue [cite: 3]
+                    investor_name = manager.get_next_investor(websocket)
+                    if not investor_name or not conn_data["investor_chats"].get(investor_name):
+                        await websocket.send_json({"type": "error", "text": "No available investors to respond."}); continue
 
-                    chat_session = conn_data["investor_chats"][investor_name] [cite: 3]
-                    investor_response = await run_in_threadpool(chat_session.send_message, composed_text) [cite: 3]
-                    raw_response_text = investor_response.text.strip() [cite: 3]
+                    chat_session = conn_data["investor_chats"][investor_name]
+                    investor_response = await run_in_threadpool(chat_session.send_message, composed_text)
+                    raw_response_text = investor_response.text.strip()
 
-                    if raw_response_text.startswith("[TERMINATE_SESSION]"): [cite: 3]
-                        final_text_to_send = raw_response_text.replace("[TERMINATE_SESSION]", "").strip() [cite: 3]
-                        await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": final_text_to_send}) [cite: 3]
-                        await websocket.send_json({"type": "session_terminated", "text": "The investor has ended the meeting.", "reason": "This pitch was a waste of time."}) [cite: 3]
-                        manager.reset_session_state(websocket); continue [cite: 3]
-                    await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": raw_response_text}) [cite: 3]
+                    if raw_response_text.startswith("[TERMINATE_SESSION]"):
+                        final_text_to_send = raw_response_text.replace("[TERMINATE_SESSION]", "").strip()
+                        await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": final_text_to_send})
+                        await websocket.send_json({"type": "session_terminated", "text": "The investor has ended the meeting.", "reason": "This pitch was a waste of time."})
+                        manager.reset_session_state(websocket); continue
+                    await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": raw_response_text})
 
-                elif msg_type == "end_session": [cite: 3]
-                    session_user_uid = conn_data.get("user_uid") [cite: 3]
-                    history = message.get("history", []) [cite: 3]
-                    audio_path = message.get("audio_path", "") [cite: 3]
-                    client_session_id = message.get("session_id", current_session_id_from_conn) [cite: 3]
-                    current_mode = conn_data.get("mode", "unknown") [cite: 3]
-                    startup_details_for_report = conn_data.get("startup_details", {}) [cite: 3]
-                    report_data_to_save = {"timestamp": None, "mode": current_mode, "startup_details": startup_details_for_report, "replay_data": {"audio_path": audio_path, "transcript": history}} [cite: 3]
-                    if current_mode == "strict": [cite: 3]
-                        analyzer = PitchAnalyzer(history); analysis_report = await analyzer.analyze_pitch(); report_data_to_save["analysis_report"] = analysis_report [cite: 3]
+                elif msg_type == "end_session":
+                    session_user_uid = conn_data.get("user_uid")
+                    history = message.get("history", [])
+                    audio_path = message.get("audio_path", "")
+                    client_session_id = message.get("session_id", current_session_id_from_conn)
+                    current_mode = conn_data.get("mode", "unknown")
+                    startup_details_for_report = conn_data.get("startup_details", {})
+                    report_data_to_save = {"timestamp": None, "mode": current_mode, "startup_details": startup_details_for_report, "replay_data": {"audio_path": audio_path, "transcript": history}}
+                    if current_mode == "strict":
+                        analyzer = PitchAnalyzer(history); analysis_report = await analyzer.analyze_pitch(); report_data_to_save["analysis_report"] = analysis_report
                     else:
-                        report_data_to_save["analysis_report"] = {"message": f"{current_mode.capitalize()} session completed.", "transcript": history} [cite: 3]
-                    await websocket.send_json({"type": "analysis_report", "data": report_data_to_save}) [cite: 3]
-                    if session_user_uid and fb_db: [cite: 3]
-                        save_session_to_firestore(session_user_uid, client_session_id, report_data_to_save) [cite: 3]
+                        report_data_to_save["analysis_report"] = {"message": f"{current_mode.capitalize()} session completed.", "transcript": history}
+                    await websocket.send_json({"type": "analysis_report", "data": report_data_to_save})
+                    if session_user_uid and fb_db:
+                        save_session_to_firestore(session_user_uid, client_session_id, report_data_to_save)
                     else:
-                        user_identifier_from_message = message.get("identifier", "unknown_user_local"); report_data_to_save["timestamp"] = datetime.now().isoformat(); save_session_to_local_file(user_identifier_from_message, report_data_to_save) [cite: 3]
+                        user_identifier_from_message = message.get("identifier", "unknown_user_local"); report_data_to_save["timestamp"] = datetime.now().isoformat(); save_session_to_local_file(user_identifier_from_message, report_data_to_save)
 
-                elif msg_type == "get_history": [cite: 3]
-                    history_user_uid = conn_data.get("user_uid") [cite: 3]
-                    history_data = get_history_from_firestore(history_user_uid) if history_user_uid and fb_db else get_history_from_local_file(message.get("identifier", "unknown_user_local")) [cite: 3]
-                    await websocket.send_json({"type": "history_data", "data": history_data}) [cite: 3]
+                elif msg_type == "get_history":
+                    history_user_uid = conn_data.get("user_uid")
+                    history_data = get_history_from_firestore(history_user_uid) if history_user_uid and fb_db else get_history_from_local_file(message.get("identifier", "unknown_user_local"))
+                    await websocket.send_json({"type": "history_data", "data": history_data})
 
-                elif msg_type == "user_timeout": [cite: 3]
-                    investor_name = conn_data.get("last_investor_name") [cite: 3]
-                    if not investor_name or not conn_data["investor_chats"].get(investor_name): continue [cite: 3]
-                    chat_session = conn_data["investor_chats"][investor_name] [cite: 3]
-                    prod_prompt = "The user was silent for a long time. Prod them to respond. Keep it short. Examples: 'Any thoughts?', 'Still there?'" [cite: 3]
-                    response = await run_in_threadpool(chat_session.send_message, prod_prompt) [cite: 3]
-                    await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": response.text.strip()}) [cite: 3]
+                elif msg_type == "user_timeout":
+                    investor_name = conn_data.get("last_investor_name")
+                    if not investor_name or not conn_data["investor_chats"].get(investor_name): continue
+                    chat_session = conn_data["investor_chats"][investor_name]
+                    prod_prompt = "The user was silent for a long time. Prod them to respond. Keep it short. Examples: 'Any thoughts?', 'Still there?'"
+                    response = await run_in_threadpool(chat_session.send_message, prod_prompt)
+                    await websocket.send_json({"type": "investor", "investor_name": investor_name, "text": response.text.strip()})
 
-            elif 'bytes' in data: [cite: 3]
-                audio_bytes = data['bytes'] [cite: 3]
-                if not audio_bytes: continue [cite: 3]
-                conn_data['latest_audio_blob'] = audio_bytes [cite: 3]
+            elif 'bytes' in data:
+                audio_bytes = data['bytes']
+                if not audio_bytes: continue
+                conn_data['latest_audio_blob'] = audio_bytes
 
-    except (WebSocketDisconnect, RuntimeError) as e: [cite: 3]
-        if isinstance(e, WebSocketDisconnect): [cite: 3]
-            print(f"Client {websocket.client} disconnected gracefully.") [cite: 3]
+    except (WebSocketDisconnect, RuntimeError) as e:
+        if isinstance(e, WebSocketDisconnect):
+            print(f"Client {websocket.client} disconnected gracefully.")
         else:
-            print(f"Connection closed with runtime error: {e}") [cite: 3]
+            print(f"Connection closed with runtime error: {e}")
     except Exception as e:
-        print(f"An unexpected error occurred in WebSocket: {e}"); traceback.print_exc() [cite: 3]
+        print(f"An unexpected error occurred in WebSocket: {e}"); traceback.print_exc()
     finally:
-        manager.disconnect(websocket) [cite: 3]
-        print("INFO:     connection closed") [cite: 3]
+        manager.disconnect(websocket)
+        print("INFO:     connection closed")
 
 # --- SERVE FRONTEND ---
 # This MUST be the last thing added to the app
 app.mount("/", StaticFiles(directory="static", html = True), name="static")
 
-def run_server(): [cite: 3]
-    print("--- SERVER READY FOR PRODUCTION DEPLOYMENT ---") [cite: 3]
-    print("To run locally without ngrok: uvicorn main:app --reload") [cite: 3]
+def run_server():
+    print("--- SERVER READY FOR PRODUCTION DEPLOYMENT ---")
+    print("To run locally without ngrok: uvicorn main:app --reload")
 
 # This part is for local execution and might not be run on Render, but is good practice to keep.
 if __name__ == "__main__":
