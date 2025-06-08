@@ -259,7 +259,7 @@ async function loginUser() {
  * the user to the backend's login endpoint.
  */
 function signInWithGoogle() {
-    window.location.href = '/login/google';
+    window.location.href = 'https://pitchine-backend.onrender.com/login/google';
 }
 
 async function logoutUser() {
