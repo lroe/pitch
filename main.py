@@ -6,7 +6,7 @@ command before executing the full AI logic.
 FIX: Always sends a response for interim transcripts to prevent frontend getting stuck.
 MAJOR UPDATE: Implemented server-side Google OAuth2 flow to bypass mobile browser
 restrictions on client-side redirects.
-FINAL FIX: Added static file serving for the frontend.
+FINAL FIX: Added static file serving for the frontend using an absolute path.
 """
 
 # 2. IMPORTS
@@ -680,7 +680,9 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
 
 # --- SERVE FRONTEND ---
 # This MUST be the last thing added to the app
-app.mount("/", StaticFiles(directory="static", html = True), name="static")
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/", StaticFiles(directory=static_dir, html = True), name="static")
+
 
 def run_server():
     print("--- SERVER READY FOR PRODUCTION DEPLOYMENT ---")
