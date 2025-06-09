@@ -103,7 +103,7 @@ let currentUser = null;
 const VAD_ENERGY_THRESHOLD = 0.02;
 const SILENCE_DETECTION_TIME_MS = 1500;
 const RESPONSE_TIMEOUT_MS = 20000;
-const PITCH_DURATION_MS = 360000;
+const PITCH_DURATION_MS = 120000;
 
 // --- Event Listeners ---
 actionBtn.addEventListener('click', handleActionButtonClick);
@@ -426,7 +426,7 @@ async function handleActionButtonClick() {
             masterRecorder.start();
 
             if (pitchMode === 'strict') {
-                updateStatus("Microphone active. Your 6-minute pitch session has started! Start speaking.", false);
+                updateStatus("Microphone active. Your 2-minute pitch session has started! Start speaking.", false);
                 startPitchTimer();
                 updateButtonState('listening');
             } else {
