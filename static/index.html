@@ -341,9 +341,40 @@
             border: 1px solid #c5dff2;
             box-shadow: var(--mdc-elevation-dp2);
             flex-grow: 1; /* Allow to grow to fill space */
+            position: relative; /* Added for positioning new buttons */
         }
         .user-speech-area h3 { margin-top: 0; font-size: 1.2rem; color: #202124; }
-        #user-transcription { font-style: italic; color: #1a73e8; min-height: 25px; font-size: 1.05rem; }
+        #user-transcription { font-style: italic; color: #1a73e8; min-height: 50px; font-size: 1.05rem; } /* Increased min-height */
+
+        /* --- NEW BUTTON STYLES --- */
+        .response-controls {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: none; /* Hidden by default */
+            gap: 10px;
+        }
+        .control-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            box-shadow: var(--mdc-elevation-dp4);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .control-btn:hover {
+            transform: scale(1.1);
+        }
+        #confirmBtn { background-color: var(--mdc-theme-secondary); } /* Green */
+        #resetBtn { background-color: var(--mdc-theme-error); } /* Red */
+        /* --- END NEW BUTTON STYLES --- */
+
 
         .full-log-area {
             flex: 2;
@@ -377,7 +408,6 @@
             flex-wrap: wrap;
             margin-bottom: 20px;
             transition: margin-bottom 0.4s ease-in-out;
-            /* Removed inline style margin-top: 20px */
         }
         .container.speech-active .controls-stream {
             margin-bottom: 100px; /* More space for speech bubble below */
@@ -538,41 +568,35 @@
         }
         #authArea h3 { margin-top:0; text-align:center; color: var(--mdc-theme-on-surface);}
 
-        /* New wrapper for form content within auth area to control max-width */
         #authArea .auth-form-content {
-            width: 100%; /* Take full width of its parent (#userNotLoggedIn) */
-            max-width: 350px; /* Constrain the overall width of the form elements */
+            width: 100%;
+            max-width: 350px;
             display: flex;
             flex-direction: column;
-            gap: 12px; /* Space between inputs and button group */
-            box-sizing: border-box; /* Include padding in width calculations */
+            gap: 12px;
+            box-sizing: border-box;
         }
-        /* Specific input styles for #authArea within the new wrapper */
         #authArea .auth-form-content input {
-            width: 100%; /* Now 100% of the 350px max-width wrapper */
-            margin-bottom: 0; /* Remove existing margin-bottom as gap handles spacing */
+            width: 100%;
+            margin-bottom: 0;
         }
-
-        /* Container for the Sign Up / Login buttons */
         #authArea .auth-buttons-wrapper {
             display: flex;
             gap: 15px;
             justify-content: center;
-            width: 100%; /* Take full width of .auth-form-content */
-            margin-bottom: 0; /* Remove existing margin-bottom as gap handles spacing */
-            flex-wrap: nowrap; /* Prevent wrapping on desktop */
+            width: 100%;
+            margin-bottom: 0;
+            flex-wrap: nowrap;
         }
         #authArea .auth-buttons-wrapper button {
-            width: calc(50% - 8px); /* Take half width minus gap */
+            width: calc(50% - 8px);
             box-sizing: border-box;
         }
-
         #authArea button.google-btn {
-            width: 100%; /* Take full width of .auth-form-content */
+            width: 100%;
             box-sizing: border-box;
-            margin-top: 12px; /* Space between buttons wrapper and Google button */
+            margin-top: 12px;
         }
-
         #userLoggedIn p { margin-bottom: 15px; font-size: 1.1rem; color: #3c4043;}
         #userLoggedIn #logoutBtn { width: auto; background-color:#707070; }
         #userLoggedIn #logoutBtn:hover { background-color:#5f6368; }
@@ -603,11 +627,10 @@
             box-shadow: var(--mdc-elevation-dp1); /* Subtle default elevation */
         }
         #modeSelectionArea label:hover { box-shadow: var(--mdc-elevation-dp2); border-color: var(--mdc-theme-primary); }
-        #modeSelectionArea label input[type="radio"] { margin-right: 12px; margin-top: 2px; /* Align radio button better */ }
+        #modeSelectionArea label input[type="radio"] { margin-right: 12px; margin-top: 2px; }
         #modeSelectionArea label strong { color: var(--mdc-theme-on-surface); font-size: 1.1rem; }
         #modeSelectionArea label div { font-size: 0.85rem; color: #5f6368; margin-top: 5px; max-width: 250px;}
 
-        /* DEFAULT HIDDEN FOR JAVASCRIPT-CONTROLLED SECTIONS - Removed !important */
         #userLoggedIn, #userHistoryControls, #startupDetailsManagementArea,
         #modeSelectionArea, #pitchingArea, #reportArea, #historyArea {
             display: none;
@@ -615,101 +638,42 @@
 
         /* --- Mobile Optimizations (Overrides Desktop Styles) --- */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .container {
-                padding: 15px;
-                border-radius: 0;
-                box-shadow: none;
-            }
-
-            .header {
-                flex-direction: column;
-                margin-bottom: 20px;
-                padding-bottom: 15px;
-            }
-
-            .header img {
-                margin-right: 0;
-                margin-bottom: 15px;
-                height: 80px; /* Increased mobile logo size */
-            }
-
-            .header h1 {
-                font-size: 1.8rem;
-                line-height: 1.3;
-            }
-
+            body { padding: 10px; }
+            .container { padding: 15px; border-radius: 0; box-shadow: none; }
+            .header { flex-direction: column; margin-bottom: 20px; padding-bottom: 15px; }
+            .header img { margin-right: 0; margin-bottom: 15px; height: 80px; }
+            .header h1 { font-size: 1.8rem; line-height: 1.3; }
             h2 { font-size: 1.4rem; margin-top: 20px; margin-bottom: 10px; }
             h3 { font-size: 1.1rem; margin-top: 15px; margin-bottom: 8px; }
-
             .intro-section { padding: 0 10px; }
             .intro-section h2 { font-size: 1.5rem; margin-bottom: 10px; }
             .intro-section p { font-size: 1rem; margin-bottom: 15px; }
             .features-list { flex-direction: column; gap: 10px; margin-top: 20px; }
             .features-list li { width: 100%; box-sizing: border-box; justify-content: center; }
-
             .top-controls { flex-direction: column; align-items: stretch; gap: 10px; }
             .user-ident, .controls-connection { flex-direction: column; gap: 10px; width: 100%; }
             .user-ident input, .controls-connection input { width: 100%; min-width: unset; }
-
-            /* AUTH AREA STYLES - Mobile Overrides */
-            #authArea {
-                padding: 15px; /* Reduce padding on mobile */
-            }
-            /* Adjust the new wrapper for mobile */
-            #authArea .auth-form-content {
-                max-width: 100%; /* Allow it to expand to full width on mobile */
-                gap: 10px; /* Adjust gap for mobile */
-            }
-            #authArea .auth-form-content input {
-                width: 100%;
-            }
-            /* Container for SignUp/Login buttons - ensure it stacks vertically */
-            #authArea .auth-buttons-wrapper {
-                flex-direction: column; /* Stack them vertically */
-                gap: 10px; /* Smaller gap for stacked buttons */
-                width: 100%;
-            }
-            #authArea .auth-buttons-wrapper button { /* Full width for buttons on mobile */
-                width: 100%;
-            }
-            /* Full width for Google button on mobile */
-            #authArea button.google-btn {
-                width: 100%;
-                margin-top: 10px;
-            }
-
-            .btn {
-                width: 100%; /* Full width buttons overall on mobile */
-                box-sizing: border-box;
-                padding: 12px 15px;
-                font-size: 0.95rem;
-            }
-            .action-btn, .stop-btn {
-                min-width: unset;
-                width: 100%;
-            }
-            .controls-stream {
-                flex-direction: column;
-                gap: 10px;
-            }
-
+            #authArea { padding: 15px; }
+            #authArea .auth-form-content { max-width: 100%; gap: 10px; }
+            #authArea .auth-form-content input { width: 100%; }
+            #authArea .auth-buttons-wrapper { flex-direction: column; gap: 10px; width: 100%; }
+            #authArea .auth-buttons-wrapper button { width: 100%; }
+            #authArea button.google-btn { width: 100%; margin-top: 10px; }
+            .btn { width: 100%; box-sizing: border-box; padding: 12px 15px; font-size: 0.95rem; }
+            .action-btn, .stop-btn { min-width: unset; width: 100%; }
+            .controls-stream { flex-direction: column; gap: 10px; }
             .investor-panel { flex-direction: column; min-height: unset; padding: 15px; gap: 25px; }
             .investor { width: 100%; }
             .investor img.avatar { width: 90px; height: 90px; border-width: 3px; }
             .speech-bubble { max-width: 90%; min-width: 120px; font-size: 0.85rem; padding: 10px 15px; top: -65px; }
             .speech-bubble.visible { top: -80px; }
             .container.speech-active .controls-stream { margin-bottom: 80px; }
-
             .main-interaction-area { flex-direction: column; }
             .user-speech-area, .full-log-area { min-width: unset; width: 100%; padding: 15px; }
+            .control-btn { width: 44px; height: 44px; font-size: 22px;} /* Slightly smaller buttons for mobile */
             #user-transcription { font-size: 0.95rem; }
             #transcription { font-size: 0.85rem; }
             .transcription-entry { padding: 8px; margin-bottom: 8px; }
-
             #reportArea, #historyArea { padding: 15px; }
             .report-section h2 { font-size: 1.4rem; margin-bottom: 15px; padding-bottom: 8px; }
             .report-section h3 { font-size: 1.1rem; }
@@ -718,7 +682,6 @@
             .status-assessment { font-size: 1.1rem; padding: 15px; }
             .history-entry { padding: 15px; }
             .history-summary { font-size: 0.9rem; }
-
             .modal-content { margin: 5% auto; width: 95%; padding: 20px; border-radius: 8px; }
             .close-btn { font-size: 30px; top: 10px; right: 15px; }
             .profile-item { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -819,7 +782,7 @@
                     <input type="radio" name="pitchMode" value="strict" checked>
                     <div>
                         <strong>Strict Pitch</strong>
-                        <div>A timed 2-min pitch. Lack of clarity will end the session.</div>
+                        <div>A timed 3-min pitch. Lack of clarity will end the session.</div>
                     </div>
                 </label>
                 <label>
@@ -834,6 +797,7 @@
 
         <div class="controls-stream">
             <button id="actionBtn" class="btn action-btn" disabled>Login/Sign Up to Practice</button>
+            <button id="finishedSpeakingBtn" class="btn action-btn" style="display: none;">Finished Speaking</button>
             <button id="stopBtn" class="btn stop-btn">End Session</button>
         </div>
 
@@ -845,7 +809,14 @@
                 <div class="investor" id="investor-ben-carter"><img src="https://w0.peakpx.com/wallpaper/419/972/HD-wallpaper-reborn-live-traje-black-suit-suits-tie.jpg" alt="Ben Carter" class="avatar" id="avatar-ben-carter"><div class="investor-name-title">Ben Carter</div><div class="speech-bubble" id="speech-ben-carter"></div></div>
             </div>
             <div class="main-interaction-area">
-                <div class="user-speech-area"><h3>Your Response:</h3><p id="user-transcription"></p></div>
+                <div class="user-speech-area">
+                    <h3>Your Response:</h3>
+                    <p id="user-transcription"></p>
+                    <div class="response-controls" id="responseControls">
+                        <button id="resetBtn" class="control-btn" title="Reset and try again">&#x27F3;</button>
+                        <button id="confirmBtn" class="control-btn" title="Confirm and send">&#x2713;</button>
+                    </div>
+                </div>
                 <div class="full-log-area"><h3>Full Conversation Log:</h3><div id="transcription"></div></div>
             </div>
         </div>
