@@ -60,11 +60,16 @@ const cancelProfileFormBtn = document.getElementById('cancelProfileFormBtn');
 const mainStartupNameInput = document.getElementById('startupNameInput');
 const mainOneLinerInput = document.getElementById('oneLinerInput');
 const mainCoreProblemInput = document.getElementById('coreProblemInput');
+// --- NEW SELECTORS ---
+const responseControls = document.getElementById('responseControls');
+const confirmBtn = document.getElementById('confirmBtn');
+const resetBtn = document.getElementById('resetBtn');
+const finishedSpeakingBtn = document.getElementById('finishedSpeakingBtn');
+
 
 // --- Global State Variables ---
 let socket;
 let audioContext, mediaStream, mediaStreamSource, processorNode, mediaRecorder;
-let silenceTimer;
 let pitchTimerInterval, pitchTimeout;
 let responseTimeout;
 let progressChart = null;
@@ -101,9 +106,8 @@ let currentUser = null;
 
 // --- Constants ---
 const VAD_ENERGY_THRESHOLD = 0.02;
-const SILENCE_DETECTION_TIME_MS = 1500;
-const RESPONSE_TIMEOUT_MS = 20000;
-const PITCH_DURATION_MS = 120000;
+const RESPONSE_TIMEOUT_MS = 30000;
+const PITCH_DURATION_MS = 180000;
 
 // --- Event Listeners ---
 actionBtn.addEventListener('click', handleActionButtonClick);
@@ -130,6 +134,11 @@ cancelProfileFormBtn.addEventListener('click', () => {
     profileFormContainer.style.display = "none";
 });
 startupProfileSelect.addEventListener('change', handleProfileSelectionChange);
+// --- NEW EVENT LISTENERS ---
+confirmBtn.addEventListener('click', handleConfirmResponse);
+resetBtn.addEventListener('click', handleResetResponse);
+finishedSpeakingBtn.addEventListener('click', handleFinishedSpeaking);
+
 window.onclick = function(event) {
     if (event.target == profilesModal) {
         profilesModal.style.display = "none";
@@ -149,17 +158,13 @@ function checkForLoginToken() {
 
     if (error) {
         alert("Google Sign-In failed on the server. Please try again.");
-        // Clean the error from the URL
         window.history.replaceState({}, document.title, "/");
     }
 
     if (loginToken) {
-        // Use the custom token from the server to sign in to Firebase
         fbAuth.signInWithCustomToken(loginToken)
             .then((userCredential) => {
-                // Sign-in successful, onAuthStateChanged will now fire with the user.
                 console.log("Signed in with custom token successfully!");
-                // Clean the token from the URL so it's not visible or reusable.
                 window.history.replaceState({}, document.title, "/");
             })
             .catch((error) => {
@@ -170,10 +175,8 @@ function checkForLoginToken() {
     }
 }
 
-// Run the check as soon as the script loads.
 checkForLoginToken();
 
-// Listen for auth state changes.
 fbAuth.onAuthStateChanged(user => {
     console.log('Auth state changed:', user ? user.email : 'No user');
     if (user) {
@@ -187,7 +190,6 @@ fbAuth.onAuthStateChanged(user => {
         viewHistoryBtn.disabled = false;
         userHistoryControls.style.display = 'flex';
 
-        // This block will now run after a successful signInWithCustomToken
         if (BACKEND_WS_URL && BACKEND_WS_URL !== "wss://YOUR_RENDER_BACKEND_URL_HERE/ws") {
             if (!socket || socket.readyState === WebSocket.CLOSED || socket.readyState === WebSocket.CLOSING) {
                  connectWebSocket();
@@ -201,8 +203,6 @@ fbAuth.onAuthStateChanged(user => {
         } else {
             updateStatus("Backend URL not configured. Please set BACKEND_WS_URL in the script.", true);
             updateButtonState('disconnected');
-            actionBtn.textContent = 'Backend Not Configured';
-            actionBtn.disabled = true;
         }
         loadStartupProfiles();
 
@@ -225,7 +225,6 @@ fbAuth.onAuthStateChanged(user => {
             performFullCleanupAndResetUI();
         }
         updateButtonState('initial');
-        actionBtn.textContent = 'Login/Sign Up to Practice';
         statusDiv.textContent = "Status: Please Login/Sign Up.";
     }
 });
@@ -254,10 +253,6 @@ async function loginUser() {
     }
 }
 
-/**
- * Starts the server-side Google Sign-In flow by redirecting
- * the user to the backend's login endpoint.
- */
 function signInWithGoogle() {
     window.location.href = 'https://pitchine-backend.onrender.com/login/google';
 }
@@ -265,7 +260,7 @@ function signInWithGoogle() {
 async function logoutUser() {
     try {
         await fbAuth.signOut();
-        alert("Logout successful.");
+        alert("Error logging out: " + error.message);
     } catch (error){
         alert("Error logging out: " + error.message);
     }
@@ -280,6 +275,9 @@ function resetForPractice() {
     fullLogDisplay.innerHTML = "";
     userTranscriptionDisplay.textContent = "";
     setActiveInvestor(null);
+    responseControls.style.display = 'none';
+    finishedSpeakingBtn.style.display = 'none';
+
 
     if (currentUser) {
         startupDetailsArea.style.display = 'block';
@@ -292,8 +290,6 @@ function resetForPractice() {
         } else {
             updateButtonState('disconnected');
             statusDiv.textContent = "Status: Not connected to backend.";
-            actionBtn.textContent = 'Connect to Backend to Practice';
-            actionBtn.disabled = true;
             if (BACKEND_WS_URL && BACKEND_WS_URL !== "wss://YOUR_RENDER_BACKEND_URL_HERE/ws" && (!socket || socket.readyState === WebSocket.CLOSED)) {
                 connectWebSocket();
             }
@@ -305,9 +301,10 @@ function resetForPractice() {
 
 function updateButtonState(newState) {
     appState = newState;
-    actionBtn.classList.remove('ready');
     actionBtn.style.display = 'flex';
     stopBtn.style.display = 'none';
+    responseControls.style.display = 'none';
+    finishedSpeakingBtn.style.display = 'none';
 
     switch (newState) {
         case 'initial':
@@ -317,21 +314,10 @@ function updateButtonState(newState) {
             modeSelectionArea.style.display = 'none';
             break;
         case 'disconnected':
-            if (currentUser) {
-                if (BACKEND_WS_URL && BACKEND_WS_URL !== "wss://YOUR_RENDER_BACKEND_URL_HERE/ws") {
-                    actionBtn.textContent = 'Attempting to Connect...';
-                    statusDiv.textContent = "Status: Attempting to connect to backend...";
-                } else {
-                    actionBtn.textContent = 'Backend Not Configured';
-                    statusDiv.textContent = "Status: Backend URL not configured.";
-                }
-                actionBtn.disabled = true;
-            } else {
-                actionBtn.textContent = 'Login/Sign Up to Practice';
-                actionBtn.disabled = true;
-            }
-            startupDetailsArea.style.display = 'none';
-            modeSelectionArea.style.display = 'none';
+             actionBtn.textContent = currentUser ? 'Connection Lost' : 'Login/Sign Up to Practice';
+             actionBtn.disabled = true;
+             startupDetailsArea.style.display = 'none';
+             modeSelectionArea.style.display = 'none';
             break;
         case 'ready_to_pitch':
             actionBtn.textContent = 'Start Practice';
@@ -339,21 +325,29 @@ function updateButtonState(newState) {
             startupDetailsArea.style.display = 'block';
             modeSelectionArea.style.display = 'block';
             break;
-        case 'listening':
-            actionBtn.textContent = 'Send to Investors';
-            actionBtn.disabled = false;
-            actionBtn.classList.add('ready');
-            actionBtn.style.display = 'flex';
+        case 'listening': // User's turn to speak
+            actionBtn.style.display = 'none';
             stopBtn.style.display = 'flex';
+            finishedSpeakingBtn.style.display = 'flex';
+            userTranscriptionDisplay.textContent = "";
+            userHasSpokenInThisTurn = false;
+            break;
+        case 'awaiting_confirmation': // User has finished speaking, awaiting confirm/reset
+            actionBtn.style.display = 'none';
+            stopBtn.style.display = 'flex';
+            finishedSpeakingBtn.style.display = 'none';
+            responseControls.style.display = 'flex';
             break;
         case 'processing':
-             actionBtn.textContent = 'Processing...';
-             actionBtn.disabled = true;
+             actionBtn.style.display = 'none';
              stopBtn.style.display = 'flex';
+             finishedSpeakingBtn.style.display = 'none';
+             responseControls.style.display = 'none';
              break;
         case 'generating_report':
             actionBtn.textContent = 'Generating Report...';
             actionBtn.disabled = true;
+            actionBtn.style.display = 'flex';
             break;
         case 'report_complete':
         case 'history_view':
@@ -364,9 +358,7 @@ function updateButtonState(newState) {
 
 async function ensureAudioContextIsRunning() {
     if (audioContext && audioContext.state === 'suspended') {
-        console.log("AudioContext is suspended, attempting to resume...");
         await audioContext.resume();
-        console.log("AudioContext state after resume:", audioContext.state);
     }
 }
 
@@ -375,10 +367,6 @@ async function handleActionButtonClick() {
 
     if (!currentUser && appState !== 'initial') {
         alert("Please log in to start practicing.");
-        return;
-    }
-    if (!BACKEND_WS_URL || BACKEND_WS_URL === "wss://YOUR_RENDER_BACKEND_URL_HERE/ws") {
-        alert("Backend URL is not configured. Please update it in vad_recorder.js.");
         return;
     }
     if (!socket || socket.readyState !== WebSocket.OPEN) {
@@ -431,31 +419,60 @@ async function handleActionButtonClick() {
                 updateButtonState('listening');
             } else {
                 updateStatus("Drill Mode activated. Waiting for the first question...", false);
-                updateButtonState('processing');
+                updateButtonState('processing'); // Wait for AI to start
             }
         } catch (err) {
             updateStatus(`Error accessing microphone: ${err.message}`, true);
             cleanupSessionButKeepConnection();
             resetForPractice();
         }
-    } else if (appState === 'listening') {
-        cancelResponseTimer();
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-            mediaRecorder.stop();
-        }
-        updateButtonState('processing');
-
-        const composedText = userTranscriptionDisplay.textContent.trim();
-        const textToSend = composedText.length > 0 ? composedText : "[Silent Response]";
-        
-        appendToLog('You', textToSend);
-        if(socket?.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: "send_composed_text", text: textToSend }));
-        }
-        userTranscriptionDisplay.textContent = "";
-        userHasSpokenInThisTurn = false;
     }
 }
+
+// --- NEW/MODIFIED FUNCTIONS FOR CONFIRM/RESET ---
+
+function handleFinishedSpeaking() {
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop(); // This will trigger mediaRecorder.onstop
+    }
+    updateButtonState('awaiting_confirmation'); // Transition to showing confirm/reset
+    updateStatus("Review your transcription and confirm.", false);
+}
+
+function handleConfirmResponse() {
+    if (appState !== 'awaiting_confirmation') return; // Check new state
+
+    cancelResponseTimer(); // Clear any existing response timer
+
+    const composedText = userTranscriptionDisplay.textContent.trim();
+    const textToSend = composedText.length > 0 ? composedText : "[Silent Response]";
+
+    appendToLog('You', textToSend);
+    if(socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "send_composed_text", text: textToSend }));
+    }
+
+    userTranscriptionDisplay.textContent = "";
+    userHasSpokenInThisTurn = false;
+    updateButtonState('processing');
+    updateStatus("Investor is thinking...", false);
+}
+
+function handleResetResponse() {
+    if (appState !== 'awaiting_confirmation') return; // Check new state
+
+    if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+    }
+    
+    utteranceChunks = [];
+    userTranscriptionDisplay.textContent = "";
+    userHasSpokenInThisTurn = false;
+    
+    updateButtonState('listening');
+    updateStatus("Your last response was cleared. Please try again.", false);
+}
+
 
 async function initializeAudioProcessing() {
     if (isAudioProcessingInitialized) return;
@@ -470,25 +487,15 @@ async function initializeAudioProcessing() {
         processorNode = audioContext.createScriptProcessor(4096, 1, 1);
 
         processorNode.onaudioprocess = e => {
-            if (appState !== 'listening') return;
-            const rms = Math.sqrt(e.inputBuffer.getChannelData(0).reduce((s, v) => s + v * v, 0) / e.inputBuffer.getChannelData(0).length);
-            const isSpeaking = rms > VAD_ENERGY_THRESHOLD;
+            // Only consider VAD if we are in 'listening' state and haven't already captured speech for this turn
+            if (appState === 'listening' && !userHasSpokenInThisTurn) {
+                const rms = Math.sqrt(e.inputBuffer.getChannelData(0).reduce((s, v) => s + v * v, 0) / e.inputBuffer.getChannelData(0).length);
+                const isSpeaking = rms > VAD_ENERGY_THRESHOLD;
 
-            if (isSpeaking) {
-                if (!userHasSpokenInThisTurn) {
-                    startInternalMediaRecorder();
+                if (isSpeaking) {
+                    startInternalMediaRecorder(); // Start recording on first speech
+                    userHasSpokenInThisTurn = true;
                 }
-                userHasSpokenInThisTurn = true;
-                cancelResponseTimer(); clearTimeout(silenceTimer); silenceTimer = null;
-                if (investorExpectedToRespond && investorAvatars[investorExpectedToRespond]) {
-                    investorAvatars[investorExpectedToRespond].classList.remove('thinking');
-                }
-            } else if (userHasSpokenInThisTurn && !silenceTimer) {
-                silenceTimer = setTimeout(() => {
-                    if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        mediaRecorder.stop();
-                    }
-                }, SILENCE_DETECTION_TIME_MS);
             }
         };
 
@@ -551,7 +558,12 @@ async function uploadAndFinalizeSession() {
 }
 
 function startInternalMediaRecorder() {
-    if (!mediaStream || mediaRecorder?.state === "recording") {
+    if (!mediaStream) {
+        console.error("MediaStream not available to start recorder.");
+        return;
+    }
+    if (mediaRecorder?.state === "recording") {
+        console.log("MediaRecorder is already recording.");
         return;
     }
 
@@ -559,7 +571,9 @@ function startInternalMediaRecorder() {
     mediaRecorder = new MediaRecorder(mediaStream, { mimeType: 'audio/webm;codecs=opus' });
 
     mediaRecorder.ondataavailable = event => {
-        if (event.data.size > 0) utteranceChunks.push(event.data);
+        if (event.data.size > 0) {
+            utteranceChunks.push(event.data);
+        }
     };
 
     mediaRecorder.onstop = () => {
@@ -567,15 +581,12 @@ function startInternalMediaRecorder() {
         if (audioBlob.size > 0 && socket?.readyState === WebSocket.OPEN) {
             socket.send(audioBlob);
             socket.send(JSON.stringify({ type: "process_interim_transcript" }));
-            updateButtonState('processing');
-        } else {
-            userHasSpokenInThisTurn = false;
         }
         utteranceChunks = [];
-        silenceTimer = null;
     };
 
     mediaRecorder.start();
+    updateStatus("Recording your response...", false);
 }
 
 function connectWebSocket() {
@@ -604,17 +615,11 @@ function connectWebSocket() {
             updateStatus("Error creating WebSocket: " + e.message, true);
             isConnecting = false;
             updateButtonState('disconnected');
-            actionBtn.textContent = 'Connection Failed';
         }
     }).catch(error => {
         updateStatus("Authentication error. Cannot connect to backend.", true);
         isConnecting = false;
-        if (currentUser) {
-            updateButtonState('disconnected');
-            actionBtn.textContent = 'Auth Error';
-        } else {
-             updateButtonState('initial');
-        }
+        updateButtonState(currentUser ? 'disconnected' : 'initial');
     });
 }
 
@@ -658,12 +663,7 @@ function setupSocketHandlers() {
                 break;
             case 'user_interim_transcript':
                 if (messageData.text) {
-                    const existingText = userTranscriptionDisplay.textContent;
-                    userTranscriptionDisplay.textContent += (existingText.length > 0 ? ' ' : '') + messageData.text;
-                }
-                if (appState !== 'generating_report') {
-                    updateButtonState('listening');
-                    userHasSpokenInThisTurn = false;
+                    userTranscriptionDisplay.textContent = messageData.text;
                 }
                 break;
             case 'investor':
@@ -697,12 +697,8 @@ function setupSocketHandlers() {
 
         if (currentUser) {
             updateButtonState('disconnected');
-            actionBtn.textContent = 'Connection Lost. Retrying...';
-            statusDiv.textContent = "Status: Disconnected. Attempting to reconnect...";
-
             setTimeout(() => {
                 if (currentUser && (!socket || socket.readyState === WebSocket.CLOSED)) {
-                    console.log("Attempting to reconnect WebSocket...");
                     connectWebSocket();
                 }
             }, 3000);
@@ -715,12 +711,7 @@ function setupSocketHandlers() {
     socket.onerror = (error) => {
         isConnecting = false;
         updateStatus("WebSocket error. Connection failed.", true);
-        if (currentUser) {
-            updateButtonState('disconnected');
-            actionBtn.textContent = 'Connection Error';
-        } else {
-            performFullCleanupAndResetUI();
-        }
+        updateButtonState(currentUser ? 'disconnected' : 'initial');
     };
 }
 
@@ -738,7 +729,6 @@ function cleanupSessionMedia() {
     clearTimeout(pitchTimeout);
     clearInterval(pitchTimerInterval);
     cancelResponseTimer();
-    clearTimeout(silenceTimer);
     isAudioProcessingInitialized = false;
 
     if (mediaRecorder?.state === "recording") mediaRecorder.stop();
@@ -771,6 +761,8 @@ function cleanupSessionButKeepConnection() {
     timerDiv.style.display = 'none';
     setActiveInvestor(null);
     userTranscriptionDisplay.textContent = "";
+    responseControls.style.display = 'none';
+    finishedSpeakingBtn.style.display = 'none';
 }
 
 function performFullCleanupAndResetUI() {
@@ -787,6 +779,8 @@ function performFullCleanupAndResetUI() {
     setActiveInvestor(null);
     fullLogDisplay.innerHTML = "";
     userTranscriptionDisplay.textContent = "";
+    responseControls.style.display = 'none';
+    finishedSpeakingBtn.style.display = 'none';
 }
 
 function appendToLog(role, text) {
@@ -1074,15 +1068,23 @@ function cancelResponseTimer() { clearTimeout(responseTimeout); responseTimeout 
 function startResponseTimer() { cancelResponseTimer(); responseTimeout = setTimeout(handleResponseTimeout, RESPONSE_TIMEOUT_MS); }
 
 function handleResponseTimeout() {
-    cancelResponseTimer();
+    cancelResponseTimer(); // Clear the timeout as it has fired
     if (socket?.readyState === WebSocket.OPEN) {
         const currentTime = (Date.now() - pitchStartTime) / 1000;
+        // Add a system message to history indicating timeout
         conversationHistory.push({role: 'System', content: '[System: Founder showed hesitation and failed to respond in time.]', startTime: currentTime});
         const userIdentifierForSession = currentUser ? currentUser.email : "local_user";
-        socket.send(JSON.stringify({ type: "user_timeout", identifier: userIdentifierForSession }));
-        updateButtonState('processing');
+        socket.send(JSON.stringify({ type: "user_timeout", identifier: userIdentifierForSession })); // Notify backend of timeout
+        
+        // Do NOT call updateButtonState('listening') here, as that clears the transcription.
+        // Instead, directly set the status and ensure the confirm/reset buttons are visible.
+        updateStatus("You took too long to respond. Please review your response and confirm, or reset to try again.", true);
+        responseControls.style.display = 'flex'; // Ensure confirm/reset buttons are visible
+        finishedSpeakingBtn.style.display = 'none'; // Ensure finished speaking button is hidden
+        appState = 'awaiting_confirmation'; // Set appState to allow confirm/reset
+
         if (investorExpectedToRespond && investorAvatars[investorExpectedToRespond]) {
-             investorAvatars[investorExpectedToRespond].classList.add('thinking');
+             investorAvatars[investorExpectedToRespond].classList.add('thinking'); // Keep investor thinking state
         }
     }
 }
